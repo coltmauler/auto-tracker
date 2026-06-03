@@ -1,5 +1,7 @@
 import { formatMoney, formatServiceDate } from '../lib/maintenance.js'
 import { formatFuelMileage, formatFuelNumber } from '../lib/fuel.js'
+import { formatDocumentDate } from '../lib/documents.js'
+import { formatExpenseDate } from '../lib/expenses.js'
 
 function Dashboard({
   fuelAverageMpg,
@@ -7,14 +9,24 @@ function Dashboard({
   fuelLifetimeSpend,
   fuelMonthlySpend,
   fuelRecordCount,
+  lifetimeExpenseSpend,
+  expiringDocumentCount,
   latestFuelRecord,
   latestFuelVehicle,
+  latestExpense,
+  latestExpenseVehicle,
+  latestDocument,
+  latestDocumentVehicle,
   latestMaintenanceRecord,
   latestMaintenanceVehicle,
   nextAlert,
   overdueAlertCount,
   maintenanceRecordCount,
+  monthlyExpenseSpend,
+  recentDocumentCount,
+  totalExpenseCount,
   upcomingAlertCount,
+  totalDocumentCount,
   totalMaintenanceCost,
   vehicleCount,
 }) {
@@ -122,6 +134,89 @@ function Dashboard({
               <p className="big-number">
                 {fuelCostPerMile != null ? formatMoney(fuelCostPerMile) : 'N/A'}
               </p>
+            </article>
+          </div>
+        </section>
+
+        <section className="dashboard-section">
+          <div className="dashboard-section-heading">
+            <h3>Expenses</h3>
+            <p className="muted">Tracked vehicle ownership expenses.</p>
+          </div>
+          <div className="dashboard-grid dashboard-grid-three">
+            <article className="info-card">
+              <h3>Total Expenses</h3>
+              <p className="big-number">{totalExpenseCount}</p>
+            </article>
+
+            <article className="info-card">
+              <h3>Lifetime Expense Spend</h3>
+              <p className="big-number">{formatMoney(lifetimeExpenseSpend)}</p>
+            </article>
+
+            <article className="info-card">
+              <h3>Monthly Expense Spend</h3>
+              <p className="big-number">{formatMoney(monthlyExpenseSpend)}</p>
+              <p className="muted">Current calendar month.</p>
+            </article>
+
+            <article className="info-card latest-activity-card">
+              <h3>Latest Expense Activity</h3>
+              {latestExpense ? (
+                <div className="vehicle-summary">
+                  <strong>
+                    {latestExpense.category}
+                    {latestExpenseVehicle
+                      ? ` on ${latestExpenseVehicle.year} ${latestExpenseVehicle.make} ${latestExpenseVehicle.model}`
+                      : ''}
+                  </strong>
+                  <p className="muted">
+                    {formatExpenseDate(latestExpense.date)} - {formatMoney(latestExpense.amount)}
+                  </p>
+                  {latestExpense.vendor ? <p>{latestExpense.vendor}</p> : null}
+                </div>
+              ) : (
+                <p className="muted">No expenses have been logged yet.</p>
+              )}
+            </article>
+          </div>
+        </section>
+
+        <section className="dashboard-section">
+          <div className="dashboard-section-heading">
+            <h3>Documents</h3>
+            <p className="muted">Document tracking and expiration monitoring.</p>
+          </div>
+          <div className="dashboard-grid dashboard-grid-three">
+            <article className="info-card">
+              <h3>Total Documents</h3>
+              <p className="big-number">{totalDocumentCount}</p>
+            </article>
+
+            <article className="info-card">
+              <h3>Expiring Documents</h3>
+              <p className="big-number">{expiringDocumentCount}</p>
+              <p className="muted">Documents with an expiration date within the alert window.</p>
+            </article>
+
+            <article className="info-card latest-activity-card">
+              <h3>Recently Added Documents</h3>
+              <p className="big-number">{recentDocumentCount}</p>
+              {latestDocument ? (
+                <div className="vehicle-summary">
+                  <strong>
+                    {latestDocument.title}
+                    {latestDocumentVehicle
+                      ? ` on ${latestDocumentVehicle.year} ${latestDocumentVehicle.make} ${latestDocumentVehicle.model}`
+                      : ''}
+                  </strong>
+                  <p className="muted">
+                    {latestDocument.documentType} - {formatDocumentDate(latestDocument.issueDate)}
+                  </p>
+                </div>
+              ) : (
+                <p className="muted">No documents have been added yet.</p>
+              )}
             </article>
           </div>
         </section>

@@ -244,7 +244,8 @@
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid var(--border);
@@ -256,7 +257,8 @@
 }
 
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   outline: 2px solid rgba(79, 70, 229, 0.28);
   border-color: rgba(79, 70, 229, 0.48);
 }
@@ -408,6 +410,11 @@
   gap: 14px;
 }
 
+.document-list {
+  display: grid;
+  gap: 14px;
+}
+
 .schedule-block {
   padding: 18px;
   border: 1px dashed rgba(79, 70, 229, 0.24);
@@ -480,6 +487,37 @@
   background: rgba(239, 246, 255, 0.72);
 }
 
+.document-card {
+  background: rgba(247, 250, 255, 0.82);
+  box-shadow: none;
+}
+
+.expense-card {
+  background: rgba(255, 250, 240, 0.82);
+  box-shadow: none;
+}
+
+.document-meta-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.document-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--accent-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .maintenance-details {
   margin-top: 14px;
 }
@@ -521,6 +559,10 @@
   .dashboard-section-heading {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .document-meta-row {
+    align-items: flex-start;
   }
 }
 

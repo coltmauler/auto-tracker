@@ -23,6 +23,20 @@ import {
   getStoredFuelRecords,
   saveFuelRecords,
 } from './lib/fuel.js'
+import {
+  createEmptyExpense,
+  createExpenseId,
+  getFleetExpenseSummary,
+  getStoredExpenses,
+  saveExpenses,
+} from './lib/expenses.js'
+import {
+  createDocumentId,
+  createEmptyDocument,
+  getFleetDocumentSummary,
+  getStoredDocuments,
+  saveDocuments,
+} from './lib/documents.js'
 import { getFleetAlertSummary } from './lib/serviceSchedules.js'
 import './App.css'
 
@@ -37,6 +51,8 @@ function App() {
   const [vehicles, setVehicles] = useState(getStoredVehicles)
   const [maintenanceRecords, setMaintenanceRecords] = useState(getStoredMaintenance)
   const [fuelRecords, setFuelRecords] = useState(getStoredFuelRecords)
+  const [expenses, setExpenses] = useState(getStoredExpenses)
+  const [documents, setDocuments] = useState(getStoredDocuments)
   const [editingVehicleId, setEditingVehicleId] = useState(null)
   const [selectedVehicleId, setSelectedVehicleId] = useState(null)
 
@@ -51,6 +67,14 @@ function App() {
   useEffect(() => {
     saveFuelRecords(fuelRecords)
   }, [fuelRecords])
+
+  useEffect(() => {
+    saveExpenses(expenses)
+  }, [expenses])
+
+  useEffect(() => {
+    saveDocuments(documents)
+  }, [documents])
 
   const selectedVehicle = useMemo(
     () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
@@ -74,6 +98,14 @@ function App() {
   const fuelSummary = useMemo(
     () => getFleetFuelSummary(vehicles, fuelRecords),
     [fuelRecords, vehicles],
+  )
+  const expenseSummary = useMemo(
+    () => getFleetExpenseSummary(vehicles, expenses),
+    [expenses, vehicles],
+  )
+  const documentSummary = useMemo(
+    () => getFleetDocumentSummary(vehicles, documents),
+    [documents, vehicles],
   )
 
   const totalMaintenanceCost = maintenanceRecords.reduce(
@@ -126,6 +158,12 @@ function App() {
       currentRecords.filter((record) => record.vehicleId !== vehicleId),
     )
     setFuelRecords((currentRecords) =>
+      currentRecords.filter((record) => record.vehicleId !== vehicleId),
+    )
+    setExpenses((currentRecords) =>
+      currentRecords.filter((record) => record.vehicleId !== vehicleId),
+    )
+    setDocuments((currentRecords) =>
       currentRecords.filter((record) => record.vehicleId !== vehicleId),
     )
 
@@ -202,6 +240,58 @@ function App() {
     )
   }
 
+  function handleSaveExpense(vehicleId, expenseData, editingId) {
+    setExpenses((currentRecords) => {
+      if (editingId) {
+        return currentRecords.map((record) =>
+          record.id === editingId ? { ...record, ...expenseData } : record,
+        )
+      }
+
+      return [
+        {
+          id: createExpenseId(),
+          vehicleId,
+          ...createEmptyExpense(),
+          ...expenseData,
+        },
+        ...currentRecords,
+      ]
+    })
+  }
+
+  function handleDeleteExpense(recordId) {
+    setExpenses((currentRecords) =>
+      currentRecords.filter((record) => record.id !== recordId),
+    )
+  }
+
+  function handleSaveDocument(vehicleId, documentData, editingId) {
+    setDocuments((currentRecords) => {
+      if (editingId) {
+        return currentRecords.map((record) =>
+          record.id === editingId ? { ...record, ...documentData } : record,
+        )
+      }
+
+      return [
+        {
+          id: createDocumentId(),
+          vehicleId,
+          ...createEmptyDocument(),
+          ...documentData,
+        },
+        ...currentRecords,
+      ]
+    })
+  }
+
+  function handleDeleteDocument(recordId) {
+    setDocuments((currentRecords) =>
+      currentRecords.filter((record) => record.id !== recordId),
+    )
+  }
+
   const activeNavigationPage =
     page === PAGES.vehicleDetail ? PAGES.vehicles : page
 
@@ -222,6 +312,15 @@ function App() {
       <main className="main-content">
         {page === PAGES.dashboard ? (
           <Dashboard
+            latestExpense={expenseSummary.latestExpense}
+            latestExpenseVehicle={expenseSummary.latestExpenseVehicle}
+            expiringDocumentCount={documentSummary.expiringDocumentCount}
+            latestDocument={documentSummary.latestDocument}
+            latestDocumentVehicle={documentSummary.latestDocumentVehicle}
+            lifetimeExpenseSpend={expenseSummary.lifetimeExpenseSpend}
+            monthlyExpenseSpend={expenseSummary.monthlyExpenseSpend}
+            recentDocumentCount={documentSummary.recentDocumentCount}
+            totalExpenseCount={expenseSummary.totalExpenseCount}
             latestMaintenanceRecord={latestMaintenanceRecord}
             latestMaintenanceVehicle={latestMaintenanceVehicle}
             latestFuelRecord={fuelSummary.latestFuelRecord}
@@ -235,6 +334,7 @@ function App() {
             fuelMonthlySpend={fuelSummary.monthlyFuelSpend}
             fuelRecordCount={fuelSummary.totalFuelRecordCount}
             upcomingAlertCount={alertSummary.upcomingAlerts.length}
+            totalDocumentCount={documentSummary.totalDocumentCount}
             totalMaintenanceCost={totalMaintenanceCost}
             vehicleCount={vehicles.length}
           />
@@ -256,11 +356,17 @@ function App() {
           selectedVehicle ? (
           <VehicleDetailPage
               key={selectedVehicle.id}
+              expenses={expenses}
+              onDeleteExpense={handleDeleteExpense}
+              documents={documents}
               fuelRecords={fuelRecords}
               maintenanceRecords={maintenanceRecords}
               onBack={handleBackFromDetail}
+              onDeleteDocument={handleDeleteDocument}
               onDeleteFuel={handleDeleteFuel}
               onDeleteMaintenance={handleDeleteMaintenance}
+              onSaveExpense={handleSaveExpense}
+              onSaveDocument={handleSaveDocument}
               onSaveFuel={handleSaveFuel}
               onSaveMaintenance={handleSaveMaintenance}
               selectedVehicle={selectedVehicle}

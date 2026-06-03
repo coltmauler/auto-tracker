@@ -8,7 +8,7 @@
 - localStorage
 
 ## Current Version
-v0.0.4
+v0.0.6
 
 ## Current Features
 - Vehicle management
@@ -23,6 +23,11 @@ v0.0.4
 - Dashboard widgets
 - Fuel records per vehicle
 - Fuel analytics and spend tracking
+- Vehicle documents per vehicle
+- Document expiration tracking
+- Dashboard document widgets
+- Expense tracking per vehicle
+- Expense analytics and ownership cost tracking
 
 ## Project Rules
 - Keep code simple and modular
@@ -32,7 +37,6 @@ v0.0.4
 - Do not add routing libraries yet
 - Do not add authentication yet
 - Do not add Supabase yet
-- Do not add documents yet
 
 ## Required After Each Change
 - Run npm run build
@@ -59,6 +63,22 @@ v0.0.4
 - Lifetime fuel spend
 - Monthly fuel spend
 - Cost per mile
+
+### v0.0.5
+- Vehicle documents per vehicle
+- Add/edit/delete document records
+- Show documents on vehicle detail view
+- Total documents widget
+- Expiring documents widget
+- Recently added documents widget
+
+### v0.0.6
+- Expense tracking per vehicle
+- Add/edit/delete expenses
+- Expense categories
+- Expense dashboard widgets
+- Vehicle ownership cost calculations
+- Cost per mile calculations
 
 ## Development Workflow
 

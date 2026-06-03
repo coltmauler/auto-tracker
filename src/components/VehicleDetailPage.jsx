@@ -1,13 +1,25 @@
 import { useState } from 'react'
 import FuelForm from './FuelForm.jsx'
 import FuelList from './FuelList.jsx'
+import DocumentForm from './DocumentForm.jsx'
+import DocumentList from './DocumentList.jsx'
+import ExpenseForm from './ExpenseForm.jsx'
+import ExpenseList from './ExpenseList.jsx'
 import MaintenanceForm from './MaintenanceForm.jsx'
 import MaintenanceList from './MaintenanceList.jsx'
 import { formatMoney, formatServiceDate, getMaintenanceStats } from '../lib/maintenance.js'
 import { getVehicleFuelStats } from '../lib/fuel.js'
+import { getVehicleDocumentSummary } from '../lib/documents.js'
+import { getVehicleExpenseStats, getVehicleOwnershipStats } from '../lib/expenses.js'
 import { getVehicleServiceAlerts, getVehicleServiceSchedules } from '../lib/serviceSchedules.js'
 
 function VehicleDetailPage({
+  expenses,
+  onDeleteExpense,
+  onSaveExpense,
+  documents,
+  onDeleteDocument,
+  onSaveDocument,
   fuelRecords,
   onDeleteFuel,
   onSaveFuel,
@@ -20,9 +32,19 @@ function VehicleDetailPage({
   const vehicleMaintenanceRecords = maintenanceRecords.filter(
     (record) => record.vehicleId === selectedVehicle.id,
   )
+  const vehicleDocuments = documents.filter((document) => document.vehicleId === selectedVehicle.id)
   const vehicleFuelRecords = fuelRecords.filter((record) => record.vehicleId === selectedVehicle.id)
+  const vehicleExpenses = expenses.filter((expense) => expense.vehicleId === selectedVehicle.id)
   const stats = getMaintenanceStats(vehicleMaintenanceRecords, selectedVehicle.mileage)
   const fuelStats = getVehicleFuelStats(selectedVehicle, fuelRecords)
+  const documentStats = getVehicleDocumentSummary(selectedVehicle, documents)
+  const expenseStats = getVehicleExpenseStats(selectedVehicle, expenses)
+  const ownershipStats = getVehicleOwnershipStats({
+    fuelStats,
+    maintenanceRecords: vehicleMaintenanceRecords,
+    expenses: vehicleExpenses,
+    vehicle: selectedVehicle,
+  })
   const schedules = getVehicleServiceSchedules(selectedVehicle)
   const alerts = getVehicleServiceAlerts(selectedVehicle, maintenanceRecords)
 
@@ -187,6 +209,60 @@ function VehicleDetailPage({
               </div>
             </div>
           </article>
+
+          <article className="info-card">
+            <h3>Document statistics</h3>
+            <div className="detail-stat-grid">
+              <div className="detail-stat">
+                <span>Documents</span>
+                <strong>{documentStats.documentCount}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Expiring documents</span>
+                <strong>{documentStats.expiringCount}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Recently added</span>
+                <strong>{documentStats.recentCount}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Latest document</span>
+                <strong>{documentStats.documents[0]?.title || 'No documents yet'}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article className="info-card">
+            <h3>Ownership cost</h3>
+            <div className="detail-stat-grid">
+              <div className="detail-stat">
+                <span>Total ownership cost</span>
+                <strong>{formatMoney(ownershipStats.ownershipTotal)}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Maintenance total</span>
+                <strong>{formatMoney(ownershipStats.maintenanceTotal)}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Fuel total</span>
+                <strong>{formatMoney(ownershipStats.fuelTotal)}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Expense total</span>
+                <strong>{formatMoney(ownershipStats.expenseTotal)}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Ownership cost per mile</span>
+                <strong>
+                  {ownershipStats.costPerMile ? formatMoney(ownershipStats.costPerMile) : 'N/A'}
+                </strong>
+              </div>
+              <div className="detail-stat">
+                <span>Expense records</span>
+                <strong>{expenseStats.expenseRecordCount}</strong>
+              </div>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -201,6 +277,20 @@ function VehicleDetailPage({
         fuelRecords={vehicleFuelRecords}
         onDeleteFuel={onDeleteFuel}
         onSaveFuel={onSaveFuel}
+        selectedVehicleId={selectedVehicle.id}
+      />
+
+      <VehicleDocumentSection
+        documentRecords={vehicleDocuments}
+        onDeleteDocument={onDeleteDocument}
+        onSaveDocument={onSaveDocument}
+        selectedVehicleId={selectedVehicle.id}
+      />
+
+      <VehicleExpenseSection
+        expenseRecords={vehicleExpenses}
+        onDeleteExpense={onDeleteExpense}
+        onSaveExpense={onSaveExpense}
         selectedVehicleId={selectedVehicle.id}
       />
     </div>
@@ -260,6 +350,69 @@ function VehicleFuelSection({ fuelRecords, onDeleteFuel, onSaveFuel, selectedVeh
         records={fuelRecords}
         onDeleteRecord={onDeleteFuel}
         onEditRecord={(record) => setEditingFuelId(record.id)}
+      />
+    </>
+  )
+}
+
+function VehicleDocumentSection({
+  documentRecords,
+  onDeleteDocument,
+  onSaveDocument,
+  selectedVehicleId,
+}) {
+  const [editingDocumentId, setEditingDocumentId] = useState(null)
+  const editingRecord =
+    documentRecords.find((record) => record.id === editingDocumentId) ?? null
+
+  function handleSaveRecord(recordData, editingId) {
+    onSaveDocument(selectedVehicleId, recordData, editingId)
+    setEditingDocumentId(null)
+  }
+
+  return (
+    <>
+      <DocumentForm
+        key={editingRecord?.id ?? `document-new-${selectedVehicleId}`}
+        editingRecord={editingRecord}
+        onCancelEdit={() => setEditingDocumentId(null)}
+        onSaveRecord={handleSaveRecord}
+      />
+      <DocumentList
+        documents={documentRecords}
+        onDeleteRecord={onDeleteDocument}
+        onEditRecord={(record) => setEditingDocumentId(record.id)}
+      />
+    </>
+  )
+}
+
+function VehicleExpenseSection({
+  expenseRecords,
+  onDeleteExpense,
+  onSaveExpense,
+  selectedVehicleId,
+}) {
+  const [editingExpenseId, setEditingExpenseId] = useState(null)
+  const editingRecord = expenseRecords.find((record) => record.id === editingExpenseId) ?? null
+
+  function handleSaveRecord(recordData, editingId) {
+    onSaveExpense(selectedVehicleId, recordData, editingId)
+    setEditingExpenseId(null)
+  }
+
+  return (
+    <>
+      <ExpenseForm
+        key={editingRecord?.id ?? `expense-new-${selectedVehicleId}`}
+        editingRecord={editingRecord}
+        onCancelEdit={() => setEditingExpenseId(null)}
+        onSaveRecord={handleSaveRecord}
+      />
+      <ExpenseList
+        expenses={expenseRecords}
+        onDeleteRecord={onDeleteExpense}
+        onEditRecord={(record) => setEditingExpenseId(record.id)}
       />
     </>
   )
