@@ -8,7 +8,7 @@
 - localStorage
 
 ## Current Version
-v0.0.7
+v0.0.8
 
 ## Current Features
 - Vehicle management
@@ -35,6 +35,9 @@ v0.0.7
 - Fuel efficiency reports
 - Maintenance cost reports
 - Per-vehicle comparison reports
+- Settings page
+- JSON backup and restore
+- Clear local app data
 
 ## Project Rules
 - Keep code simple and modular
@@ -95,6 +98,13 @@ v0.0.7
 - Fuel efficiency report
 - Maintenance cost report
 - Per-vehicle comparison report
+
+### v0.0.8
+- Settings page
+- Export all app data to JSON
+- Import app data from JSON
+- Clear all local app data with confirmation
+- Show last backup/export date
 
 ## Development Workflow
 

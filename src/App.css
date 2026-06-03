@@ -416,6 +416,44 @@
   gap: 20px;
 }
 
+.settings-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.settings-help {
+  margin-top: 12px;
+}
+
+.settings-file-button {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-file-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.danger-panel {
+  border-color: rgba(185, 28, 28, 0.16);
+  background: rgba(255, 248, 248, 0.82);
+}
+
 .report-list {
   display: grid;
   gap: 12px;
@@ -622,6 +660,10 @@
   }
 
   .report-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-meta-grid {
     grid-template-columns: 1fr;
   }
 }

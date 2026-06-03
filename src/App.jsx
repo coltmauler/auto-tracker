@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Dashboard from './components/Dashboard.jsx'
 import Navigation from './components/Navigation.jsx'
 import ReportsPage from './components/ReportsPage.jsx'
+import SettingsPage from './components/SettingsPage.jsx'
 import VehicleDetailPage from './components/VehicleDetailPage.jsx'
 import VehiclesPage from './components/VehiclesPage.jsx'
 import {
@@ -38,6 +39,13 @@ import {
   getStoredDocuments,
   saveDocuments,
 } from './lib/documents.js'
+import {
+  buildAppBackup,
+  createBackupFileName,
+  getStoredBackupMeta,
+  parseAppBackup,
+  saveBackupMeta,
+} from './lib/backup.js'
 import { buildReportsData } from './lib/reports.js'
 import { getFleetAlertSummary } from './lib/serviceSchedules.js'
 import './App.css'
@@ -45,6 +53,7 @@ import './App.css'
 const PAGES = {
   dashboard: 'dashboard',
   reports: 'reports',
+  settings: 'settings',
   vehicles: 'vehicles',
   vehicleDetail: 'vehicleDetail',
 }
@@ -58,6 +67,8 @@ function App() {
   const [documents, setDocuments] = useState(getStoredDocuments)
   const [editingVehicleId, setEditingVehicleId] = useState(null)
   const [selectedVehicleId, setSelectedVehicleId] = useState(null)
+  const [backupMeta, setBackupMeta] = useState(getStoredBackupMeta)
+  const [clearDataConfirmation, setClearDataConfirmation] = useState(false)
 
   useEffect(() => {
     saveVehicles(vehicles)
@@ -127,10 +138,109 @@ function App() {
     0,
   )
 
+  const backupExportedAt = backupMeta?.exportedAt ?? null
+  const backupImportedAt = backupMeta?.importedAt ?? null
+
   function handleNavigate(nextPage) {
     setPage(nextPage)
     setSelectedVehicleId(null)
     setEditingVehicleId(null)
+  }
+
+  function handleExportAllData() {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const exportedAt = new Date().toISOString()
+    const backup = buildAppBackup({
+      documents,
+      expenses,
+      fuelRecords,
+      maintenanceRecords,
+      vehicles,
+    })
+
+    const blob = new Blob([JSON.stringify({ ...backup, exportedAt }, null, 2)], {
+      type: 'application/json',
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = createBackupFileName()
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+
+    const nextMeta = {
+      exportedAt,
+      importedAt: backupMeta?.importedAt ?? null,
+    }
+    setBackupMeta(nextMeta)
+    saveBackupMeta(nextMeta)
+  }
+
+  async function handleImportAllData(event) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (!file) {
+      return
+    }
+
+    try {
+      const text = await file.text()
+      const imported = parseAppBackup(text)
+
+      setVehicles(imported.vehicles)
+      setMaintenanceRecords(imported.maintenanceRecords)
+      setFuelRecords(imported.fuelRecords)
+      setDocuments(imported.documents)
+      setExpenses(imported.expenses)
+      setSelectedVehicleId(null)
+      setEditingVehicleId(null)
+
+      const importedAt = new Date().toISOString()
+      const nextMeta = {
+        exportedAt: imported.exportedAt ?? backupMeta?.exportedAt ?? null,
+        importedAt,
+      }
+      setBackupMeta(nextMeta)
+      saveBackupMeta(nextMeta)
+      setPage(PAGES.dashboard)
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Unable to import backup file.')
+    }
+  }
+
+  function handleClearAllData() {
+    if (!clearDataConfirmation) {
+      return
+    }
+
+    if (typeof window !== 'undefined') {
+      const keysToRemove = []
+      for (let index = 0; index < window.localStorage.length; index += 1) {
+        const key = window.localStorage.key(index)
+        if (key && key.startsWith('auto-tracker')) {
+          keysToRemove.push(key)
+        }
+      }
+
+      keysToRemove.forEach((key) => window.localStorage.removeItem(key))
+    }
+
+    setVehicles([])
+    setMaintenanceRecords([])
+    setFuelRecords([])
+    setExpenses([])
+    setDocuments([])
+    setEditingVehicleId(null)
+    setSelectedVehicleId(null)
+    setBackupMeta(null)
+    setClearDataConfirmation(false)
+    setPage(PAGES.dashboard)
   }
 
   function handleSaveVehicle(vehicleData, editingId) {
@@ -355,6 +465,18 @@ function App() {
         ) : null}
 
         {page === PAGES.reports ? <ReportsPage reports={reportData} /> : null}
+
+        {page === PAGES.settings ? (
+          <SettingsPage
+            backupExportedAt={backupExportedAt}
+            backupImportedAt={backupImportedAt}
+            clearDataConfirmation={clearDataConfirmation}
+            onClearAllData={handleClearAllData}
+            onImportBackup={handleImportAllData}
+            onMarkClearConfirmation={setClearDataConfirmation}
+            onRequestExport={handleExportAllData}
+          />
+        ) : null}
 
         {page === PAGES.vehicles ? (
           <VehiclesPage

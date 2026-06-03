@@ -261,6 +261,18 @@ function VehicleDetailPage({
                 <span>Expense records</span>
                 <strong>{expenseStats.expenseRecordCount}</strong>
               </div>
+              <div className="detail-stat">
+                <span>Monthly expense spend</span>
+                <strong>{formatMoney(expenseStats.monthlyExpenseSpend)}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Latest expense</span>
+                <strong>
+                  {expenseStats.latestExpense
+                    ? formatServiceDate(expenseStats.latestExpense.date)
+                    : 'No records yet'}
+                </strong>
+              </div>
             </div>
           </article>
         </div>
