@@ -8,7 +8,7 @@
 - localStorage
 
 ## Current Version
-v0.0.6
+v0.0.7
 
 ## Current Features
 - Vehicle management
@@ -28,6 +28,13 @@ v0.0.6
 - Dashboard document widgets
 - Expense tracking per vehicle
 - Expense analytics and ownership cost tracking
+- Reports page
+- Vehicle cost summary reports
+- Monthly spending reports
+- Spending by category reports
+- Fuel efficiency reports
+- Maintenance cost reports
+- Per-vehicle comparison reports
 
 ## Project Rules
 - Keep code simple and modular
@@ -79,6 +86,15 @@ v0.0.6
 - Expense dashboard widgets
 - Vehicle ownership cost calculations
 - Cost per mile calculations
+
+### v0.0.7
+- Reports page
+- Vehicle cost summary report
+- Monthly spending report
+- Spending by category report
+- Fuel efficiency report
+- Maintenance cost report
+- Per-vehicle comparison report
 
 ## Development Workflow
 

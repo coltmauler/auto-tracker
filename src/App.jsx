@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Dashboard from './components/Dashboard.jsx'
 import Navigation from './components/Navigation.jsx'
+import ReportsPage from './components/ReportsPage.jsx'
 import VehicleDetailPage from './components/VehicleDetailPage.jsx'
 import VehiclesPage from './components/VehiclesPage.jsx'
 import {
@@ -37,11 +38,13 @@ import {
   getStoredDocuments,
   saveDocuments,
 } from './lib/documents.js'
+import { buildReportsData } from './lib/reports.js'
 import { getFleetAlertSummary } from './lib/serviceSchedules.js'
 import './App.css'
 
 const PAGES = {
   dashboard: 'dashboard',
+  reports: 'reports',
   vehicles: 'vehicles',
   vehicleDetail: 'vehicleDetail',
 }
@@ -106,6 +109,17 @@ function App() {
   const documentSummary = useMemo(
     () => getFleetDocumentSummary(vehicles, documents),
     [documents, vehicles],
+  )
+  const reportData = useMemo(
+    () =>
+      buildReportsData({
+        documents,
+        expenses,
+        fuelRecords,
+        maintenanceRecords,
+        vehicles,
+      }),
+    [documents, expenses, fuelRecords, maintenanceRecords, vehicles],
   )
 
   const totalMaintenanceCost = maintenanceRecords.reduce(
@@ -339,6 +353,8 @@ function App() {
             vehicleCount={vehicles.length}
           />
         ) : null}
+
+        {page === PAGES.reports ? <ReportsPage reports={reportData} /> : null}
 
         {page === PAGES.vehicles ? (
           <VehiclesPage

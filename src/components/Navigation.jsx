@@ -10,6 +10,13 @@ function Navigation({ activePage, onNavigate, vehicleCount }) {
       </button>
       <button
         type="button"
+        className={activePage === 'reports' ? 'nav-button active' : 'nav-button'}
+        onClick={() => onNavigate('reports')}
+      >
+        Reports
+      </button>
+      <button
+        type="button"
         className={activePage === 'vehicles' ? 'nav-button active' : 'nav-button'}
         onClick={() => onNavigate('vehicles')}
       >
