@@ -7,6 +7,7 @@ function VehiclesPage({
   onDeleteVehicle,
   onEditVehicle,
   onSaveVehicle,
+  onViewVehicle,
   vehicles,
 }) {
   return (
@@ -20,6 +21,7 @@ function VehiclesPage({
       <VehicleList
         onDeleteVehicle={onDeleteVehicle}
         onEditVehicle={onEditVehicle}
+        onViewVehicle={onViewVehicle}
         vehicles={vehicles}
       />
     </div>

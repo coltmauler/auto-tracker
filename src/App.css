@@ -161,8 +161,13 @@
   gap: 16px;
 }
 
+.dashboard-grid-four {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .info-card,
 .vehicle-card,
+.maintenance-card,
 .empty-state {
   padding: 18px;
   border-radius: 20px;
@@ -178,6 +183,10 @@
   display: grid;
   gap: 6px;
   margin-top: 12px;
+}
+
+.latest-activity-card {
+  min-height: 100%;
 }
 
 .vehicle-form {
@@ -271,6 +280,15 @@
   gap: 14px;
 }
 
+.vehicle-card-clickable {
+  cursor: pointer;
+}
+
+.vehicle-card-clickable:focus-visible {
+  outline: 2px solid rgba(79, 70, 229, 0.35);
+  outline-offset: 2px;
+}
+
 .vehicle-card-header {
   justify-content: space-between;
   align-items: flex-start;
@@ -286,6 +304,12 @@
 .vehicle-subtitle {
   margin: 6px 0 0;
   color: var(--muted);
+}
+
+.vehicle-link-hint {
+  margin: 8px 0 0;
+  font-size: 0.88rem;
+  color: var(--accent-strong);
 }
 
 .vehicle-details {
@@ -310,6 +334,50 @@
   grid-column: 1 / -1;
 }
 
+.vehicle-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.detail-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.detail-stat {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(208, 213, 221, 0.8);
+}
+
+.detail-stat span {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.detail-stat strong {
+  color: var(--text-h);
+  font-size: 1rem;
+}
+
+.maintenance-list {
+  display: grid;
+  gap: 14px;
+}
+
+.maintenance-card {
+  box-shadow: none;
+}
+
+.maintenance-details {
+  margin-top: 14px;
+}
+
 .empty-state {
   text-align: center;
 }
@@ -322,8 +390,11 @@
   }
 
   .dashboard-grid,
+  .dashboard-grid-four,
   .form-grid,
-  .vehicle-details {
+  .vehicle-details,
+  .vehicle-detail-grid,
+  .detail-stat-grid {
     grid-template-columns: 1fr;
   }
 

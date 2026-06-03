@@ -45,3 +45,24 @@ v0.0.2
 - Service schedules
 - Upcoming maintenance alerts
 - Overdue maintenance alerts
+
+## Development Workflow
+
+Before coding:
+- Read AI_CONTEXT.md
+
+After coding:
+- Run npm run build
+- Run npm run lint
+- Summarize changed files
+- Update AI_CONTEXT.md
+- Do not remove existing functionality unless explicitly requested
+
+## Coding Standards
+
+- Prefer modifying existing files over creating unnecessary files
+- Keep components small and reusable
+- Keep localStorage structure organized
+- Minimize dependencies
+- Avoid premature optimization
+- Build the simplest working solution first

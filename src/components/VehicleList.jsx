@@ -1,4 +1,4 @@
-function VehicleList({ vehicles, onDeleteVehicle, onEditVehicle }) {
+function VehicleList({ vehicles, onDeleteVehicle, onEditVehicle, onViewVehicle }) {
   if (vehicles.length === 0) {
     return (
       <section className="page-panel">
@@ -21,22 +21,45 @@ function VehicleList({ vehicles, onDeleteVehicle, onEditVehicle }) {
 
       <div className="vehicle-list">
         {vehicles.map((vehicle) => (
-          <article key={vehicle.id} className="vehicle-card">
+          <article
+            key={vehicle.id}
+            className="vehicle-card vehicle-card-clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => onViewVehicle(vehicle.id)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onViewVehicle(vehicle.id)
+              }
+            }}
+          >
             <div className="vehicle-card-header">
               <div>
                 <p className="vehicle-title">
                   {vehicle.year} {vehicle.make} {vehicle.model}
                 </p>
                 <p className="vehicle-subtitle">{vehicle.nickname || 'No nickname'}</p>
+                <p className="vehicle-link-hint">Open details and maintenance history</p>
               </div>
               <div className="vehicle-actions">
-                <button type="button" className="secondary-button" onClick={() => onEditVehicle(vehicle)}>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onEditVehicle(vehicle)
+                  }}
+                >
                   Edit
                 </button>
                 <button
                   type="button"
                   className="danger-button"
-                  onClick={() => onDeleteVehicle(vehicle.id)}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onDeleteVehicle(vehicle.id)
+                  }}
                 >
                   Delete
                 </button>

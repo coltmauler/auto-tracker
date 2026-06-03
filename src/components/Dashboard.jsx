@@ -1,12 +1,18 @@
-function Dashboard({ vehicleCount, vehicles }) {
-  const latestVehicle = vehicles[0]
+import { formatMoney, formatServiceDate } from '../lib/maintenance.js'
 
+function Dashboard({
+  latestMaintenanceRecord,
+  latestMaintenanceVehicle,
+  maintenanceRecordCount,
+  totalMaintenanceCost,
+  vehicleCount,
+}) {
   return (
     <section className="page-panel">
       <div className="page-header">
         <div>
           <p className="section-label">Dashboard</p>
-          <h2>Track the vehicles you own without leaving the browser.</h2>
+          <h2>Track your fleet and its service history in one place.</h2>
         </div>
         <div className="stat-card">
           <span className="stat-value">{vehicleCount}</span>
@@ -14,36 +20,43 @@ function Dashboard({ vehicleCount, vehicles }) {
         </div>
       </div>
 
-      <div className="dashboard-grid">
+      <div className="dashboard-grid dashboard-grid-four">
         <article className="info-card">
-          <h3>Current inventory</h3>
-          <p>
-            Add vehicles on the Vehicles page. Everything is stored in localStorage
-            for now, so the data stays on this device.
-          </p>
-        </article>
-
-        <article className="info-card">
-          <h3>Vehicle count</h3>
+          <h3>Total Vehicles</h3>
           <p className="big-number">{vehicleCount}</p>
-          <p className="muted">This count updates as you add, edit, or delete vehicles.</p>
+          <p className="muted">All saved vehicles in localStorage.</p>
         </article>
 
         <article className="info-card">
-          <h3>Latest entry</h3>
-          {latestVehicle ? (
+          <h3>Total Maintenance Records</h3>
+          <p className="big-number">{maintenanceRecordCount}</p>
+          <p className="muted">Every service entry across all vehicles.</p>
+        </article>
+
+        <article className="info-card">
+          <h3>Total Maintenance Cost</h3>
+          <p className="big-number">{formatMoney(totalMaintenanceCost)}</p>
+          <p className="muted">Sum of all maintenance costs recorded so far.</p>
+        </article>
+
+        <article className="info-card latest-activity-card">
+          <h3>Latest Maintenance Activity</h3>
+          {latestMaintenanceRecord ? (
             <div className="vehicle-summary">
               <strong>
-                {latestVehicle.year} {latestVehicle.make} {latestVehicle.model}
+                {latestMaintenanceRecord.serviceType}
+                {latestMaintenanceVehicle
+                  ? ` on ${latestMaintenanceVehicle.year} ${latestMaintenanceVehicle.make} ${latestMaintenanceVehicle.model}`
+                  : ''}
               </strong>
-              <p>{latestVehicle.nickname || 'No nickname yet'}</p>
               <p className="muted">
-                {latestVehicle.mileage} miles
-                {latestVehicle.licensePlate ? ` · ${latestVehicle.licensePlate}` : ''}
+                {formatServiceDate(latestMaintenanceRecord.serviceDate)} ·{' '}
+                {formatMoney(latestMaintenanceRecord.cost)}
               </p>
+              {latestMaintenanceRecord.shop ? <p>{latestMaintenanceRecord.shop}</p> : null}
             </div>
           ) : (
-            <p className="muted">No vehicles have been added yet.</p>
+            <p className="muted">No maintenance records have been logged yet.</p>
           )}
         </article>
       </div>

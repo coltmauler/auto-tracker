@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Dashboard from './components/Dashboard.jsx'
 import Navigation from './components/Navigation.jsx'
+import VehicleDetailPage from './components/VehicleDetailPage.jsx'
 import VehiclesPage from './components/VehiclesPage.jsx'
 import {
   createEmptyVehicle,
@@ -8,23 +9,62 @@ import {
   getStoredVehicles,
   saveVehicles,
 } from './lib/vehicles.js'
+import {
+  createEmptyMaintenance,
+  createMaintenanceId,
+  getLatestMaintenanceRecord,
+  getStoredMaintenance,
+  saveMaintenance,
+} from './lib/maintenance.js'
 import './App.css'
 
 const PAGES = {
   dashboard: 'dashboard',
   vehicles: 'vehicles',
+  vehicleDetail: 'vehicleDetail',
 }
 
 function App() {
   const [page, setPage] = useState(PAGES.dashboard)
   const [vehicles, setVehicles] = useState(getStoredVehicles)
+  const [maintenanceRecords, setMaintenanceRecords] = useState(getStoredMaintenance)
   const [editingVehicleId, setEditingVehicleId] = useState(null)
+  const [selectedVehicleId, setSelectedVehicleId] = useState(null)
 
   useEffect(() => {
     saveVehicles(vehicles)
   }, [vehicles])
 
-  const editingVehicle = vehicles.find(({ id }) => id === editingVehicleId) ?? null
+  useEffect(() => {
+    saveMaintenance(maintenanceRecords)
+  }, [maintenanceRecords])
+
+  const selectedVehicle = useMemo(
+    () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
+    [selectedVehicleId, vehicles],
+  )
+  const editingVehicle = useMemo(
+    () => vehicles.find((vehicle) => vehicle.id === editingVehicleId) ?? null,
+    [editingVehicleId, vehicles],
+  )
+  const latestMaintenanceRecord = useMemo(
+    () => getLatestMaintenanceRecord(maintenanceRecords),
+    [maintenanceRecords],
+  )
+  const latestMaintenanceVehicle =
+    latestMaintenanceRecord &&
+    vehicles.find((vehicle) => vehicle.id === latestMaintenanceRecord.vehicleId)
+
+  const totalMaintenanceCost = maintenanceRecords.reduce(
+    (sum, record) => sum + (Number(record.cost) || 0),
+    0,
+  )
+
+  function handleNavigate(nextPage) {
+    setPage(nextPage)
+    setSelectedVehicleId(null)
+    setEditingVehicleId(null)
+  }
 
   function handleSaveVehicle(vehicleData, editingId) {
     setVehicles((currentVehicles) => {
@@ -43,51 +83,137 @@ function App() {
         ...currentVehicles,
       ]
     })
+
     setEditingVehicleId(null)
     setPage(PAGES.vehicles)
   }
 
   function handleEditVehicle(vehicle) {
     setEditingVehicleId(vehicle.id)
+    setSelectedVehicleId(null)
     setPage(PAGES.vehicles)
   }
 
   function handleDeleteVehicle(vehicleId) {
+    const wasSelected = selectedVehicleId === vehicleId
+    const wasEditing = editingVehicleId === vehicleId
+
     setVehicles((currentVehicles) =>
       currentVehicles.filter((vehicle) => vehicle.id !== vehicleId),
     )
-    setEditingVehicleId((currentEditingId) =>
-      currentEditingId === vehicleId ? null : currentEditingId,
+    setMaintenanceRecords((currentRecords) =>
+      currentRecords.filter((record) => record.vehicleId !== vehicleId),
+    )
+
+    if (wasEditing) {
+      setEditingVehicleId(null)
+    }
+
+    if (wasSelected) {
+      setSelectedVehicleId(null)
+      setPage(PAGES.vehicles)
+    }
+  }
+
+  function handleViewVehicle(vehicleId) {
+    setSelectedVehicleId(vehicleId)
+    setEditingVehicleId(null)
+    setPage(PAGES.vehicleDetail)
+  }
+
+  function handleBackFromDetail() {
+    setSelectedVehicleId(null)
+    setPage(PAGES.vehicles)
+  }
+
+  function handleSaveMaintenance(vehicleId, maintenanceData, editingId) {
+    setMaintenanceRecords((currentRecords) => {
+      if (editingId) {
+        return currentRecords.map((record) =>
+          record.id === editingId ? { ...record, ...maintenanceData } : record,
+        )
+      }
+
+      return [
+        {
+          id: createMaintenanceId(),
+          vehicleId,
+          ...createEmptyMaintenance(),
+          ...maintenanceData,
+        },
+        ...currentRecords,
+      ]
+    })
+  }
+
+  function handleDeleteMaintenance(recordId) {
+    setMaintenanceRecords((currentRecords) =>
+      currentRecords.filter((record) => record.id !== recordId),
     )
   }
+
+  const activeNavigationPage =
+    page === PAGES.vehicleDetail ? PAGES.vehicles : page
 
   return (
     <div className="app-shell">
       <header className="topbar">
         <div>
           <p className="eyebrow">Auto Tracker</p>
-          <h1>Vehicle tracking, kept local.</h1>
+          <h1>Vehicle and maintenance tracking, kept local.</h1>
         </div>
         <Navigation
-          activePage={page}
-          onNavigate={setPage}
+          activePage={activeNavigationPage}
+          onNavigate={handleNavigate}
           vehicleCount={vehicles.length}
         />
       </header>
 
       <main className="main-content">
         {page === PAGES.dashboard ? (
-          <Dashboard vehicleCount={vehicles.length} vehicles={vehicles} />
-        ) : (
+          <Dashboard
+            latestMaintenanceRecord={latestMaintenanceRecord}
+            latestMaintenanceVehicle={latestMaintenanceVehicle}
+            maintenanceRecordCount={maintenanceRecords.length}
+            totalMaintenanceCost={totalMaintenanceCost}
+            vehicleCount={vehicles.length}
+          />
+        ) : null}
+
+        {page === PAGES.vehicles ? (
           <VehiclesPage
             editingVehicle={editingVehicle}
             onCancelEdit={() => setEditingVehicleId(null)}
             onDeleteVehicle={handleDeleteVehicle}
             onEditVehicle={handleEditVehicle}
             onSaveVehicle={handleSaveVehicle}
+            onViewVehicle={handleViewVehicle}
             vehicles={vehicles}
           />
-        )}
+        ) : null}
+
+        {page === PAGES.vehicleDetail ? (
+          selectedVehicle ? (
+            <VehicleDetailPage
+              key={selectedVehicle.id}
+              maintenanceRecords={maintenanceRecords}
+              onBack={handleBackFromDetail}
+              onDeleteMaintenance={handleDeleteMaintenance}
+              onSaveMaintenance={handleSaveMaintenance}
+              selectedVehicle={selectedVehicle}
+            />
+          ) : (
+            <section className="page-panel">
+              <div className="empty-state">
+                <h3>Vehicle not found</h3>
+                <p>This vehicle was removed or is no longer available.</p>
+                <button type="button" className="primary-button" onClick={handleBackFromDetail}>
+                  Back to vehicles
+                </button>
+              </div>
+            </section>
+          )
+        ) : null}
       </main>
     </div>
   )
