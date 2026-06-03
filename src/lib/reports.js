@@ -6,6 +6,10 @@ import {
   getDocumentStatus,
   sortDocumentsDescending,
 } from './documents.js'
+import {
+  formatCostPerDistanceValue,
+  getCostPerDistanceLabel,
+} from './preferences.js'
 
 function parseDate(value) {
   if (!value) {
@@ -221,28 +225,40 @@ export function buildComparisonReport(vehicleRows) {
     }))
 }
 
-export function formatReportMoney(value) {
-  return formatMoney(value)
+export function formatReportMoney(value, preferences = null) {
+  return formatMoney(value, preferences?.currencySymbol ?? '$')
 }
 
-export function formatReportMileage(value) {
-  return formatFuelMileage(value)
+export function formatReportMileage(value, preferences = null) {
+  return formatFuelMileage(value, preferences?.distanceUnit ?? 'miles')
 }
 
 export function formatReportMpg(value) {
   return formatFuelNumber(value)
 }
 
-export function formatReportDate(value) {
-  return value ? formatExpenseDate(value) : 'Not set'
+export function formatReportDate(value, preferences = null) {
+  return formatExpenseDate(value, preferences?.dateFormat ?? 'mdy')
 }
 
-export function formatReportDocumentDate(value) {
-  return formatDocumentDate(value)
+export function formatReportDocumentDate(value, preferences = null) {
+  return formatDocumentDate(value, preferences?.dateFormat ?? 'mdy')
 }
 
-export function getReportDocumentStatus(document) {
-  return getDocumentStatus(document)
+export function getReportDocumentStatus(document, preferences = null) {
+  return getDocumentStatus(document, new Date(), Number(preferences?.reminderWindowDays) || 30)
+}
+
+export function formatReportCostPerDistance(value, preferences = null) {
+  return formatCostPerDistanceValue(
+    value,
+    preferences?.distanceUnit ?? 'miles',
+    preferences?.currencySymbol ?? '$',
+  )
+}
+
+export function getReportCostPerDistanceLabel(preferences = null) {
+  return getCostPerDistanceLabel(preferences?.distanceUnit ?? 'miles')
 }
 
 function getFuelStats(fuelRecords) {

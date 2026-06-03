@@ -8,7 +8,7 @@
 - localStorage
 
 ## Current Version
-v0.0.8
+v0.0.9
 
 ## Current Features
 - Vehicle management
@@ -36,8 +36,18 @@ v0.0.8
 - Maintenance cost reports
 - Per-vehicle comparison reports
 - Settings page
+- App settings and user preferences
+- Distance unit preference
+- Currency symbol preference
+- Date format preference
+- Default reminder window preference
 - JSON backup and restore
 - Clear local app data
+- Improved empty states
+- Improved mobile layout
+- Improved form validation messages
+- App version display
+- About this app section
 
 ## Project Rules
 - Keep code simple and modular
@@ -105,6 +115,15 @@ v0.0.8
 - Import app data from JSON
 - Clear all local app data with confirmation
 - Show last backup/export date
+
+### v0.0.9
+- App settings section
+- User preferences
+- Improved empty states
+- Improved mobile layout
+- Improved form validation messages
+- Simple app version display
+- About this app section
 
 ## Development Workflow
 

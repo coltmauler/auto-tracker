@@ -1,7 +1,7 @@
 import { getLatestMaintenanceRecord } from './maintenance.js'
+import { formatDistanceValue } from './preferences.js'
 
 const UPCOMING_MILES_BUFFER = 500
-const UPCOMING_DAYS_BUFFER = 30
 const DAY_MS = 24 * 60 * 60 * 1000
 
 const SERVICE_DEFINITIONS = [
@@ -34,7 +34,13 @@ export function getVehicleServiceSchedules(vehicle) {
   })).filter((schedule) => schedule.miles || schedule.months)
 }
 
-export function getVehicleServiceAlerts(vehicle, maintenanceRecords, now = new Date()) {
+export function getVehicleServiceAlerts(
+  vehicle,
+  maintenanceRecords,
+  now = new Date(),
+  reminderWindowDays = 30,
+  distanceUnit = 'miles',
+) {
   const vehicleRecords = maintenanceRecords.filter((record) => record.vehicleId === vehicle.id)
 
   return SERVICE_DEFINITIONS.flatMap((definition) => {
@@ -64,14 +70,24 @@ export function getVehicleServiceAlerts(vehicle, maintenanceRecords, now = new D
       vehicleMileage: parsePositiveNumber(vehicle.mileage),
       vehicleId: vehicle.id,
       vehicleLabel: `${vehicle.year} ${vehicle.make} ${vehicle.model}`.trim(),
+      reminderWindowDays,
+      distanceUnit,
     })
 
     return alert ? [alert] : []
   })
 }
 
-export function getFleetAlertSummary(vehicles, maintenanceRecords, now = new Date()) {
-  const alerts = vehicles.flatMap((vehicle) => getVehicleServiceAlerts(vehicle, maintenanceRecords, now))
+export function getFleetAlertSummary(
+  vehicles,
+  maintenanceRecords,
+  now = new Date(),
+  reminderWindowDays = 30,
+  distanceUnit = 'miles',
+) {
+  const alerts = vehicles.flatMap((vehicle) =>
+    getVehicleServiceAlerts(vehicle, maintenanceRecords, now, reminderWindowDays, distanceUnit),
+  )
   const overdueAlerts = alerts.filter((alert) => alert.status === 'overdue')
   const upcomingAlerts = alerts.filter((alert) => alert.status === 'upcoming')
 
@@ -91,6 +107,8 @@ function buildServiceAlert({
   vehicleMileage,
   vehicleId,
   vehicleLabel,
+  reminderWindowDays,
+  distanceUnit,
 }) {
   const lastMileage = parsePositiveNumber(lastServiceRecord.mileage)
   const lastServiceDate = parseServiceDate(lastServiceRecord.serviceDate)
@@ -114,7 +132,7 @@ function buildServiceAlert({
   const isUpcoming =
     !isOverdue &&
     ((milesRemaining != null && milesRemaining <= UPCOMING_MILES_BUFFER) ||
-      (daysRemaining != null && daysRemaining <= UPCOMING_DAYS_BUFFER))
+      (daysRemaining != null && daysRemaining <= reminderWindowDays))
 
   if (!isOverdue && !isUpcoming) {
     return null
@@ -135,18 +153,20 @@ function buildServiceAlert({
       milesRemaining,
       daysRemaining,
       status: isOverdue ? 'overdue' : 'upcoming',
+      distanceUnit,
     }),
   }
 }
 
-function composeAlertMessage({ milesRemaining, daysRemaining, status }) {
+function composeAlertMessage({ milesRemaining, daysRemaining, status, distanceUnit }) {
   const parts = []
 
   if (milesRemaining != null) {
+    const distanceText = formatDistanceValue(Math.abs(milesRemaining), distanceUnit)
     if (status === 'overdue') {
-      parts.push(`${formatQuantity(Math.abs(milesRemaining))} miles overdue`)
+      parts.push(`${distanceText} overdue`)
     } else {
-      parts.push(`${formatQuantity(milesRemaining)} miles left`)
+      parts.push(`${formatDistanceValue(milesRemaining, distanceUnit)} left`)
     }
   }
 
@@ -236,8 +256,4 @@ function addMonths(date, months) {
   const nextDate = new Date(date)
   nextDate.setMonth(nextDate.getMonth() + months)
   return nextDate
-}
-
-function formatQuantity(value) {
-  return new Intl.NumberFormat('en-US').format(value)
 }

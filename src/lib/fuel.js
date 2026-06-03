@@ -1,4 +1,5 @@
 import { formatMoney } from './maintenance.js'
+import { formatDistanceValue } from './preferences.js'
 
 const STORAGE_KEY = 'auto-tracker.v0.0.4.fuel'
 
@@ -64,23 +65,23 @@ export function validateFuelRecord(record) {
   const errors = {}
 
   if (!record.fillDate.trim()) {
-    errors.fillDate = 'Fill date is required.'
+    errors.fillDate = 'Choose the fill-up date.'
   }
 
   if (!record.mileage.trim()) {
-    errors.mileage = 'Mileage is required.'
+    errors.mileage = 'Enter the mileage at fill-up.'
   } else if (!/^\d+$/.test(record.mileage.trim())) {
-    errors.mileage = 'Mileage must be a non-negative whole number.'
+    errors.mileage = 'Mileage must be a whole number of miles.'
   }
 
   if (!record.gallons.trim()) {
-    errors.gallons = 'Gallons are required.'
+    errors.gallons = 'Enter the gallons added.'
   } else if (!isPositiveDecimal(record.gallons.trim())) {
     errors.gallons = 'Gallons must be a positive number.'
   }
 
   if (!record.cost.trim()) {
-    errors.cost = 'Cost is required.'
+    errors.cost = 'Enter the fuel cost.'
   } else if (!isPositiveDecimal(record.cost.trim())) {
     errors.cost = 'Cost must be a positive number.'
   }
@@ -215,14 +216,8 @@ export function formatFuelNumber(value) {
   }).format(value)
 }
 
-export function formatFuelMileage(value) {
-  if (value == null) {
-    return 'N/A'
-  }
-
-  return new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 1,
-  }).format(value)
+export function formatFuelMileage(value, distanceUnit = 'miles') {
+  return formatDistanceValue(value, distanceUnit)
 }
 
 function calculateFleetUsageStats(vehicles, fuelRecords) {

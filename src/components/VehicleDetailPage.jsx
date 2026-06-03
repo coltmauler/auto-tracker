@@ -12,8 +12,14 @@ import { getVehicleFuelStats } from '../lib/fuel.js'
 import { getVehicleDocumentSummary } from '../lib/documents.js'
 import { getVehicleExpenseStats, getVehicleOwnershipStats } from '../lib/expenses.js'
 import { getVehicleServiceAlerts, getVehicleServiceSchedules } from '../lib/serviceSchedules.js'
+import {
+  formatCostPerDistanceValue,
+  formatDistanceValue,
+  getCostPerDistanceLabel,
+} from '../lib/preferences.js'
 
 function VehicleDetailPage({
+  preferences,
   expenses,
   onDeleteExpense,
   onSaveExpense,
@@ -29,15 +35,30 @@ function VehicleDetailPage({
   onSaveMaintenance,
   selectedVehicle,
 }) {
+  const distanceUnit = preferences?.distanceUnit ?? 'miles'
+  const currencySymbol = preferences?.currencySymbol ?? '$'
+  const dateFormat = preferences?.dateFormat ?? 'mdy'
+  const reminderWindowDays = Number(preferences?.reminderWindowDays) || 30
+  const costPerDistanceLabel = getCostPerDistanceLabel(distanceUnit)
+
   const vehicleMaintenanceRecords = maintenanceRecords.filter(
     (record) => record.vehicleId === selectedVehicle.id,
   )
   const vehicleDocuments = documents.filter((document) => document.vehicleId === selectedVehicle.id)
   const vehicleFuelRecords = fuelRecords.filter((record) => record.vehicleId === selectedVehicle.id)
   const vehicleExpenses = expenses.filter((expense) => expense.vehicleId === selectedVehicle.id)
-  const stats = getMaintenanceStats(vehicleMaintenanceRecords, selectedVehicle.mileage)
+  const stats = getMaintenanceStats(
+    vehicleMaintenanceRecords,
+    selectedVehicle.mileage,
+    preferences,
+  )
   const fuelStats = getVehicleFuelStats(selectedVehicle, fuelRecords)
-  const documentStats = getVehicleDocumentSummary(selectedVehicle, documents)
+  const documentStats = getVehicleDocumentSummary(
+    selectedVehicle,
+    documents,
+    new Date(),
+    reminderWindowDays,
+  )
   const expenseStats = getVehicleExpenseStats(selectedVehicle, expenses)
   const ownershipStats = getVehicleOwnershipStats({
     fuelStats,
@@ -46,7 +67,13 @@ function VehicleDetailPage({
     vehicle: selectedVehicle,
   })
   const schedules = getVehicleServiceSchedules(selectedVehicle)
-  const alerts = getVehicleServiceAlerts(selectedVehicle, maintenanceRecords)
+  const alerts = getVehicleServiceAlerts(
+    selectedVehicle,
+    maintenanceRecords,
+    new Date(),
+    reminderWindowDays,
+    distanceUnit,
+  )
 
   return (
     <div className="page-stack">
@@ -86,7 +113,7 @@ function VehicleDetailPage({
               </div>
               <div>
                 <dt>Mileage</dt>
-                <dd>{selectedVehicle.mileage || 'Not set'}</dd>
+                <dd>{formatDistanceValue(selectedVehicle.mileage, distanceUnit)}</dd>
               </div>
               <div>
                 <dt>VIN</dt>
@@ -116,7 +143,7 @@ function VehicleDetailPage({
               </div>
               <div className="detail-stat">
                 <span>Lifetime maintenance cost</span>
-                <strong>{formatMoney(stats.totalCost)}</strong>
+                <strong>{formatMoney(stats.totalCost, currencySymbol)}</strong>
               </div>
               <div className="detail-stat">
                 <span>Last service date</span>
@@ -135,7 +162,7 @@ function VehicleDetailPage({
                   <div key={schedule.key} className="schedule-summary-item">
                     <strong>{schedule.label}</strong>
                     <p className="muted">
-                      {schedule.miles ? `${schedule.miles.toLocaleString()} miles` : 'No miles'}
+                      {schedule.miles ? `${formatDistanceValue(schedule.miles, distanceUnit)}` : 'No mileage'}
                       {schedule.miles && schedule.months ? ' or ' : ''}
                       {schedule.months ? `${schedule.months} months` : ''}
                     </p>
@@ -143,7 +170,10 @@ function VehicleDetailPage({
                 ))}
               </div>
             ) : (
-              <p className="muted">No service schedule configured for this vehicle.</p>
+              <p className="muted">
+                No service schedule configured yet. Add oil change or tire rotation intervals to
+                start alerts.
+              </p>
             )}
           </article>
 
@@ -166,13 +196,16 @@ function VehicleDetailPage({
                     </div>
                     <p>{alert.message}</p>
                     <p className="muted">
-                      Last service: {formatServiceDate(alert.lastServiceRecord.serviceDate)}
+                      Last service: {formatServiceDate(alert.lastServiceRecord.serviceDate, dateFormat)}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="muted">No upcoming or overdue alerts for this vehicle.</p>
+              <p className="muted">
+                No upcoming or overdue alerts for this vehicle. Add a service schedule to enable
+                reminders.
+              </p>
             )}
           </article>
 
@@ -185,25 +218,29 @@ function VehicleDetailPage({
               </div>
               <div className="detail-stat">
                 <span>Lifetime fuel spend</span>
-                <strong>{formatMoney(fuelStats.lifetimeFuelSpend)}</strong>
+                <strong>{formatMoney(fuelStats.lifetimeFuelSpend, currencySymbol)}</strong>
               </div>
               <div className="detail-stat">
                 <span>Monthly fuel spend</span>
-                <strong>{formatMoney(fuelStats.monthlyFuelSpend)}</strong>
+                <strong>{formatMoney(fuelStats.monthlyFuelSpend, currencySymbol)}</strong>
               </div>
               <div className="detail-stat">
                 <span>Average MPG</span>
                 <strong>{fuelStats.averageMpg ? fuelStats.averageMpg.toFixed(1) : 'N/A'}</strong>
               </div>
               <div className="detail-stat">
-                <span>Cost per mile</span>
-                <strong>{fuelStats.costPerMile ? formatMoney(fuelStats.costPerMile) : 'N/A'}</strong>
+                <span>{costPerDistanceLabel}</span>
+                <strong>
+                  {fuelStats.costPerMile
+                    ? formatCostPerDistanceValue(fuelStats.costPerMile, distanceUnit, currencySymbol)
+                    : 'N/A'}
+                </strong>
               </div>
               <div className="detail-stat">
                 <span>Last fuel date</span>
                 <strong>
                   {fuelStats.latestFuelRecord
-                    ? formatServiceDate(fuelStats.latestFuelRecord.fillDate)
+                    ? formatServiceDate(fuelStats.latestFuelRecord.fillDate, dateFormat)
                     : 'No records yet'}
                 </strong>
               </div>
@@ -237,24 +274,30 @@ function VehicleDetailPage({
             <div className="detail-stat-grid">
               <div className="detail-stat">
                 <span>Total ownership cost</span>
-                <strong>{formatMoney(ownershipStats.ownershipTotal)}</strong>
+                <strong>{formatMoney(ownershipStats.ownershipTotal, currencySymbol)}</strong>
               </div>
               <div className="detail-stat">
                 <span>Maintenance total</span>
-                <strong>{formatMoney(ownershipStats.maintenanceTotal)}</strong>
+                <strong>{formatMoney(ownershipStats.maintenanceTotal, currencySymbol)}</strong>
               </div>
               <div className="detail-stat">
                 <span>Fuel total</span>
-                <strong>{formatMoney(ownershipStats.fuelTotal)}</strong>
+                <strong>{formatMoney(ownershipStats.fuelTotal, currencySymbol)}</strong>
               </div>
               <div className="detail-stat">
                 <span>Expense total</span>
-                <strong>{formatMoney(ownershipStats.expenseTotal)}</strong>
+                <strong>{formatMoney(ownershipStats.expenseTotal, currencySymbol)}</strong>
               </div>
               <div className="detail-stat">
-                <span>Ownership cost per mile</span>
+                <span>{costPerDistanceLabel}</span>
                 <strong>
-                  {ownershipStats.costPerMile ? formatMoney(ownershipStats.costPerMile) : 'N/A'}
+                  {ownershipStats.costPerMile
+                    ? formatCostPerDistanceValue(
+                        ownershipStats.costPerMile,
+                        distanceUnit,
+                        currencySymbol,
+                      )
+                    : 'N/A'}
                 </strong>
               </div>
               <div className="detail-stat">
@@ -263,13 +306,13 @@ function VehicleDetailPage({
               </div>
               <div className="detail-stat">
                 <span>Monthly expense spend</span>
-                <strong>{formatMoney(expenseStats.monthlyExpenseSpend)}</strong>
+                <strong>{formatMoney(expenseStats.monthlyExpenseSpend, currencySymbol)}</strong>
               </div>
               <div className="detail-stat">
                 <span>Latest expense</span>
                 <strong>
                   {expenseStats.latestExpense
-                    ? formatServiceDate(expenseStats.latestExpense.date)
+                    ? formatServiceDate(expenseStats.latestExpense.date, dateFormat)
                     : 'No records yet'}
                 </strong>
               </div>
@@ -279,6 +322,7 @@ function VehicleDetailPage({
       </section>
 
       <VehicleMaintenanceSection
+        preferences={preferences}
         maintenanceRecords={vehicleMaintenanceRecords}
         onDeleteMaintenance={onDeleteMaintenance}
         onSaveMaintenance={onSaveMaintenance}
@@ -286,6 +330,7 @@ function VehicleDetailPage({
       />
 
       <VehicleFuelSection
+        preferences={preferences}
         fuelRecords={vehicleFuelRecords}
         onDeleteFuel={onDeleteFuel}
         onSaveFuel={onSaveFuel}
@@ -293,6 +338,7 @@ function VehicleDetailPage({
       />
 
       <VehicleDocumentSection
+        preferences={preferences}
         documentRecords={vehicleDocuments}
         onDeleteDocument={onDeleteDocument}
         onSaveDocument={onSaveDocument}
@@ -300,6 +346,7 @@ function VehicleDetailPage({
       />
 
       <VehicleExpenseSection
+        preferences={preferences}
         expenseRecords={vehicleExpenses}
         onDeleteExpense={onDeleteExpense}
         onSaveExpense={onSaveExpense}
@@ -310,6 +357,7 @@ function VehicleDetailPage({
 }
 
 function VehicleMaintenanceSection({
+  preferences,
   maintenanceRecords,
   onDeleteMaintenance,
   onSaveMaintenance,
@@ -333,6 +381,7 @@ function VehicleMaintenanceSection({
         onSaveRecord={handleSaveRecord}
       />
       <MaintenanceList
+        preferences={preferences}
         records={maintenanceRecords}
         onDeleteRecord={onDeleteMaintenance}
         onEditRecord={(record) => setEditingMaintenanceId(record.id)}
@@ -341,7 +390,7 @@ function VehicleMaintenanceSection({
   )
 }
 
-function VehicleFuelSection({ fuelRecords, onDeleteFuel, onSaveFuel, selectedVehicleId }) {
+function VehicleFuelSection({ preferences, fuelRecords, onDeleteFuel, onSaveFuel, selectedVehicleId }) {
   const [editingFuelId, setEditingFuelId] = useState(null)
   const editingRecord = fuelRecords.find((record) => record.id === editingFuelId) ?? null
 
@@ -359,6 +408,7 @@ function VehicleFuelSection({ fuelRecords, onDeleteFuel, onSaveFuel, selectedVeh
         onSaveRecord={handleSaveRecord}
       />
       <FuelList
+        preferences={preferences}
         records={fuelRecords}
         onDeleteRecord={onDeleteFuel}
         onEditRecord={(record) => setEditingFuelId(record.id)}
@@ -368,6 +418,7 @@ function VehicleFuelSection({ fuelRecords, onDeleteFuel, onSaveFuel, selectedVeh
 }
 
 function VehicleDocumentSection({
+  preferences,
   documentRecords,
   onDeleteDocument,
   onSaveDocument,
@@ -391,6 +442,7 @@ function VehicleDocumentSection({
         onSaveRecord={handleSaveRecord}
       />
       <DocumentList
+        preferences={preferences}
         documents={documentRecords}
         onDeleteRecord={onDeleteDocument}
         onEditRecord={(record) => setEditingDocumentId(record.id)}
@@ -400,6 +452,7 @@ function VehicleDocumentSection({
 }
 
 function VehicleExpenseSection({
+  preferences,
   expenseRecords,
   onDeleteExpense,
   onSaveExpense,
@@ -422,6 +475,7 @@ function VehicleExpenseSection({
         onSaveRecord={handleSaveRecord}
       />
       <ExpenseList
+        preferences={preferences}
         expenses={expenseRecords}
         onDeleteRecord={onDeleteExpense}
         onEditRecord={(record) => setEditingExpenseId(record.id)}

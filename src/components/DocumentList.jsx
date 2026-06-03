@@ -1,14 +1,16 @@
 import { formatDocumentDate, getDocumentStatus, sortDocumentsDescending } from '../lib/documents.js'
 
-function DocumentList({ documents, onDeleteRecord, onEditRecord }) {
+function DocumentList({ preferences, documents, onDeleteRecord, onEditRecord }) {
   const sortedDocuments = sortDocumentsDescending(documents)
+  const dateFormat = preferences?.dateFormat ?? 'mdy'
+  const reminderWindowDays = Number(preferences?.reminderWindowDays) || 30
 
   if (sortedDocuments.length === 0) {
     return (
       <section className="page-panel">
         <div className="empty-state">
           <h3>No documents yet</h3>
-          <p>Add the first document above.</p>
+          <p>Add registration, insurance, or inspection documents to keep them organized.</p>
         </div>
       </section>
     )
@@ -30,8 +32,8 @@ function DocumentList({ documents, onDeleteRecord, onEditRecord }) {
               <div>
                 <p className="vehicle-title">{document.title}</p>
                 <p className="vehicle-subtitle">
-                  {document.documentType} - {formatDocumentDate(document.issueDate)} -{' '}
-                  {formatDocumentDate(document.expirationDate)}
+                  {document.documentType} - {formatDocumentDate(document.issueDate, dateFormat)} -{' '}
+                  {formatDocumentDate(document.expirationDate, dateFormat)}
                 </p>
               </div>
               <div className="vehicle-actions">
@@ -53,18 +55,20 @@ function DocumentList({ documents, onDeleteRecord, onEditRecord }) {
             </div>
 
             <div className="document-meta-row">
-              <span className="document-badge">{getDocumentStatus(document)}</span>
+              <span className="document-badge">
+                {getDocumentStatus(document, new Date(), reminderWindowDays)}
+              </span>
               <span className="muted">{document.fileName || 'No file name'}</span>
             </div>
 
             <dl className="vehicle-details maintenance-details document-details">
               <div>
                 <dt>Issue date</dt>
-                <dd>{formatDocumentDate(document.issueDate)}</dd>
+                <dd>{formatDocumentDate(document.issueDate, dateFormat)}</dd>
               </div>
               <div>
                 <dt>Expiration date</dt>
-                <dd>{formatDocumentDate(document.expirationDate)}</dd>
+                <dd>{formatDocumentDate(document.expirationDate, dateFormat)}</dd>
               </div>
               <div className="vehicle-notes">
                 <dt>Notes</dt>

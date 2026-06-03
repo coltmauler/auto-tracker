@@ -1,5 +1,6 @@
+import { formatDateValue } from './preferences.js'
+
 const STORAGE_KEY = 'auto-tracker.v0.0.5.documents'
-const EXPIRING_WINDOW_DAYS = 30
 const RECENT_WINDOW_DAYS = 30
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -65,26 +66,26 @@ export function validateDocument(document) {
   const errors = {}
 
   if (!document.documentType.trim()) {
-    errors.documentType = 'Document type is required.'
+    errors.documentType = 'Enter the document type.'
   }
 
   if (!document.title.trim()) {
-    errors.title = 'Title is required.'
+    errors.title = 'Enter a document title.'
   }
 
   if (!document.fileName.trim()) {
-    errors.fileName = 'File name is required.'
+    errors.fileName = 'Enter a file name or reference.'
   }
 
   const issueDate = parseDate(document.issueDate)
   const expirationDate = parseDate(document.expirationDate)
 
   if (document.issueDate.trim() && !issueDate) {
-    errors.issueDate = 'Issue date must be a valid date.'
+    errors.issueDate = 'Choose a valid issue date.'
   }
 
   if (document.expirationDate.trim() && !expirationDate) {
-    errors.expirationDate = 'Expiration date must be a valid date.'
+    errors.expirationDate = 'Choose a valid expiration date.'
   }
 
   if (issueDate && expirationDate && expirationDate < issueDate) {
@@ -94,23 +95,14 @@ export function validateDocument(document) {
   return errors
 }
 
-export function formatDocumentDate(value) {
-  const parsedDate = parseDate(value)
-  if (!parsedDate) {
-    return 'Not set'
-  }
-
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(parsedDate)
+export function formatDocumentDate(value, dateFormat = 'mdy') {
+  return formatDateValue(value, dateFormat)
 }
 
-export function getVehicleDocumentSummary(vehicle, documents, now = new Date()) {
+export function getVehicleDocumentSummary(vehicle, documents, now = new Date(), reminderWindowDays = 30) {
   const vehicleDocuments = documents.filter((document) => document.vehicleId === vehicle.id)
   const expiringDocuments = vehicleDocuments.filter((document) =>
-    isExpiring(document.expirationDate, now),
+    isExpiring(document.expirationDate, now, reminderWindowDays),
   )
   const recentDocuments = vehicleDocuments.filter((document) =>
     isRecent(document.issueDate, now),
@@ -124,10 +116,10 @@ export function getVehicleDocumentSummary(vehicle, documents, now = new Date()) 
   }
 }
 
-export function getFleetDocumentSummary(vehicles, documents, now = new Date()) {
+export function getFleetDocumentSummary(vehicles, documents, now = new Date(), reminderWindowDays = 30) {
   const totalDocumentCount = documents.length
   const expiringDocuments = documents.filter((document) =>
-    isExpiring(document.expirationDate, now),
+    isExpiring(document.expirationDate, now, reminderWindowDays),
   )
   const recentDocuments = documents.filter((document) => isRecent(document.issueDate, now))
   const latestDocument = getLatestDocument(documents)
@@ -145,7 +137,7 @@ export function getFleetDocumentSummary(vehicles, documents, now = new Date()) {
   }
 }
 
-export function getDocumentStatus(document, now = new Date()) {
+export function getDocumentStatus(document, now = new Date(), reminderWindowDays = 30) {
   if (!document.expirationDate.trim()) {
     return 'No expiration'
   }
@@ -161,7 +153,7 @@ export function getDocumentStatus(document, now = new Date()) {
     return 'Expired'
   }
 
-  if (daysRemaining <= EXPIRING_WINDOW_DAYS) {
+  if (daysRemaining <= reminderWindowDays) {
     return 'Expiring soon'
   }
 
@@ -210,14 +202,14 @@ function sortDocumentsByExpiration(documents) {
   })
 }
 
-function isExpiring(value, now) {
+function isExpiring(value, now, reminderWindowDays) {
   const parsedDate = parseDate(value)
   if (!parsedDate) {
     return false
   }
 
   const daysRemaining = Math.ceil((parsedDate.getTime() - now.getTime()) / DAY_MS)
-  return daysRemaining <= EXPIRING_WINDOW_DAYS
+  return daysRemaining <= reminderWindowDays
 }
 
 function isRecent(value, now) {

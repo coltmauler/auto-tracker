@@ -77,15 +77,15 @@ export function validateExpense(expense) {
   const amountValue = expense.amount.trim()
 
   if (!expense.date.trim()) {
-    errors.date = 'Date is required.'
+    errors.date = 'Choose the expense date.'
   }
 
   if (!expense.category.trim()) {
-    errors.category = 'Category is required.'
+    errors.category = 'Choose a category.'
   }
 
   if (!amountValue) {
-    errors.amount = 'Amount is required.'
+    errors.amount = 'Enter the expense amount.'
   } else if (!isPositiveDecimal(amountValue)) {
     errors.amount = 'Amount must be a positive number.'
   }
@@ -93,17 +93,29 @@ export function validateExpense(expense) {
   return errors
 }
 
-export function formatExpenseDate(value) {
-  const parsedDate = parseDate(value)
-  if (!parsedDate) {
+export function formatExpenseDate(value, dateFormat = 'mdy') {
+  if (!value) {
     return 'Not set'
   }
 
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(parsedDate)
+  const parsedDate = parseDate(value)
+  if (!parsedDate) {
+    return value
+  }
+
+  const year = parsedDate.getFullYear()
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0')
+  const day = String(parsedDate.getDate()).padStart(2, '0')
+
+  if (dateFormat === 'dmy') {
+    return `${day}/${month}/${year}`
+  }
+
+  if (dateFormat === 'ymd') {
+    return `${year}-${month}-${day}`
+  }
+
+  return `${month}/${day}/${year}`
 }
 
 export function sortExpensesDescending(expenses) {

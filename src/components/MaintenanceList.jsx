@@ -1,12 +1,17 @@
 import { formatMoney, formatServiceDate } from '../lib/maintenance.js'
+import { formatDistanceValue } from '../lib/preferences.js'
 
-function MaintenanceList({ records, onDeleteRecord, onEditRecord }) {
+function MaintenanceList({ preferences, records, onDeleteRecord, onEditRecord }) {
+  const distanceUnit = preferences?.distanceUnit ?? 'miles'
+  const currencySymbol = preferences?.currencySymbol ?? '$'
+  const dateFormat = preferences?.dateFormat ?? 'mdy'
+
   if (records.length === 0) {
     return (
       <section className="page-panel">
         <div className="empty-state">
           <h3>No maintenance records yet</h3>
-          <p>Add the first service entry above.</p>
+          <p>Add an oil change, tire rotation, or repair to start the service history.</p>
         </div>
       </section>
     )
@@ -28,8 +33,9 @@ function MaintenanceList({ records, onDeleteRecord, onEditRecord }) {
               <div>
                 <p className="vehicle-title">{record.serviceType}</p>
                 <p className="vehicle-subtitle">
-                  {formatServiceDate(record.serviceDate)} - {record.mileage} miles -{' '}
-                  {formatMoney(record.cost)}
+                  {formatServiceDate(record.serviceDate, dateFormat)} -{' '}
+                  {formatDistanceValue(record.mileage, distanceUnit)} -{' '}
+                  {formatMoney(record.cost, currencySymbol)}
                 </p>
               </div>
               <div className="vehicle-actions">

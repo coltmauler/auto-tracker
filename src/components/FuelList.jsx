@@ -1,15 +1,23 @@
-import { formatFuelMileage, formatMoney, sortFuelRecordsDescending } from '../lib/fuel.js'
+import {
+  formatFuelMileage,
+  formatFuelNumber,
+  formatMoney,
+  sortFuelRecordsDescending,
+} from '../lib/fuel.js'
 import { formatServiceDate } from '../lib/maintenance.js'
 
-function FuelList({ records, onDeleteRecord, onEditRecord }) {
+function FuelList({ preferences, records, onDeleteRecord, onEditRecord }) {
   const sortedRecords = sortFuelRecordsDescending(records)
+  const distanceUnit = preferences?.distanceUnit ?? 'miles'
+  const currencySymbol = preferences?.currencySymbol ?? '$'
+  const dateFormat = preferences?.dateFormat ?? 'mdy'
 
   if (sortedRecords.length === 0) {
     return (
       <section className="page-panel">
         <div className="empty-state">
           <h3>No fuel records yet</h3>
-          <p>Add the first fill-up above.</p>
+          <p>Add the first fill-up to start tracking MPG, fuel spend, and cost per mile.</p>
         </div>
       </section>
     )
@@ -29,11 +37,11 @@ function FuelList({ records, onDeleteRecord, onEditRecord }) {
           <article key={record.id} className="maintenance-card fuel-card">
             <div className="vehicle-card-header">
               <div>
-                <p className="vehicle-title">{formatServiceDate(record.fillDate)}</p>
+                <p className="vehicle-title">{formatServiceDate(record.fillDate, dateFormat)}</p>
                 <p className="vehicle-subtitle">
-                  {formatFuelMileage(Number(record.mileage) || null)} miles -{' '}
-                  {formatFuelMileage(Number(record.gallons) || null)} gallons -{' '}
-                  {formatMoney(record.cost)}
+                  {formatFuelMileage(Number(record.mileage) || null, distanceUnit)} -{' '}
+                  {formatFuelNumber(Number(record.gallons) || null)} gallons -{' '}
+                  {formatMoney(record.cost, currencySymbol)}
                 </p>
               </div>
               <div className="vehicle-actions">

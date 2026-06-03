@@ -1,14 +1,16 @@
 import { formatExpenseDate, formatMoney, sortExpensesDescending } from '../lib/expenses.js'
 
-function ExpenseList({ expenses, onDeleteRecord, onEditRecord }) {
+function ExpenseList({ preferences, expenses, onDeleteRecord, onEditRecord }) {
   const sortedExpenses = sortExpensesDescending(expenses)
+  const dateFormat = preferences?.dateFormat ?? 'mdy'
+  const currencySymbol = preferences?.currencySymbol ?? '$'
 
   if (sortedExpenses.length === 0) {
     return (
       <section className="page-panel">
         <div className="empty-state">
           <h3>No expenses yet</h3>
-          <p>Add the first expense above.</p>
+          <p>Add a repair, fee, or ownership cost to start the expense history.</p>
         </div>
       </section>
     )
@@ -30,7 +32,7 @@ function ExpenseList({ expenses, onDeleteRecord, onEditRecord }) {
               <div>
                 <p className="vehicle-title">{expense.category}</p>
                 <p className="vehicle-subtitle">
-                  {formatExpenseDate(expense.date)} - {formatMoney(expense.amount)}
+                  {formatExpenseDate(expense.date, dateFormat)} - {formatMoney(expense.amount, currencySymbol)}
                 </p>
               </div>
               <div className="vehicle-actions">
@@ -58,11 +60,11 @@ function ExpenseList({ expenses, onDeleteRecord, onEditRecord }) {
             <dl className="vehicle-details maintenance-details document-details">
               <div>
                 <dt>Date</dt>
-                <dd>{formatExpenseDate(expense.date)}</dd>
+                <dd>{formatExpenseDate(expense.date, dateFormat)}</dd>
               </div>
               <div>
                 <dt>Amount</dt>
-                <dd>{formatMoney(expense.amount)}</dd>
+                <dd>{formatMoney(expense.amount, currencySymbol)}</dd>
               </div>
               <div className="vehicle-notes">
                 <dt>Notes</dt>

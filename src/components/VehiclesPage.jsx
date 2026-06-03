@@ -3,6 +3,7 @@ import VehicleList from './VehicleList.jsx'
 
 function VehiclesPage({
   editingVehicle,
+  preferences,
   onCancelEdit,
   onDeleteVehicle,
   onEditVehicle,
@@ -19,6 +20,7 @@ function VehiclesPage({
         onSaveVehicle={onSaveVehicle}
       />
       <VehicleList
+        preferences={preferences}
         onDeleteVehicle={onDeleteVehicle}
         onEditVehicle={onEditVehicle}
         onViewVehicle={onViewVehicle}

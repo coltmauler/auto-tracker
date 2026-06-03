@@ -48,6 +48,10 @@ import {
 } from './lib/backup.js'
 import { buildReportsData } from './lib/reports.js'
 import { getFleetAlertSummary } from './lib/serviceSchedules.js'
+import {
+  getStoredPreferences,
+  savePreferences,
+} from './lib/preferences.js'
 import './App.css'
 
 const PAGES = {
@@ -58,6 +62,8 @@ const PAGES = {
   vehicleDetail: 'vehicleDetail',
 }
 
+const APP_VERSION = 'v0.0.9'
+
 function App() {
   const [page, setPage] = useState(PAGES.dashboard)
   const [vehicles, setVehicles] = useState(getStoredVehicles)
@@ -65,6 +71,7 @@ function App() {
   const [fuelRecords, setFuelRecords] = useState(getStoredFuelRecords)
   const [expenses, setExpenses] = useState(getStoredExpenses)
   const [documents, setDocuments] = useState(getStoredDocuments)
+  const [preferences, setPreferences] = useState(getStoredPreferences)
   const [editingVehicleId, setEditingVehicleId] = useState(null)
   const [selectedVehicleId, setSelectedVehicleId] = useState(null)
   const [backupMeta, setBackupMeta] = useState(getStoredBackupMeta)
@@ -90,6 +97,10 @@ function App() {
     saveDocuments(documents)
   }, [documents])
 
+  useEffect(() => {
+    savePreferences(preferences)
+  }, [preferences])
+
   const selectedVehicle = useMemo(
     () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
     [selectedVehicleId, vehicles],
@@ -102,12 +113,27 @@ function App() {
     () => getLatestMaintenanceRecord(maintenanceRecords),
     [maintenanceRecords],
   )
-  const latestMaintenanceVehicle =
-    latestMaintenanceRecord &&
-    vehicles.find((vehicle) => vehicle.id === latestMaintenanceRecord.vehicleId)
+  const latestMaintenanceVehicle = useMemo(
+    () =>
+      latestMaintenanceRecord
+        ? vehicles.find((vehicle) => vehicle.id === latestMaintenanceRecord.vehicleId) ?? null
+        : null,
+    [latestMaintenanceRecord, vehicles],
+  )
+  const reminderWindowDays = useMemo(
+    () => Number(preferences.reminderWindowDays) || 30,
+    [preferences.reminderWindowDays],
+  )
   const alertSummary = useMemo(
-    () => getFleetAlertSummary(vehicles, maintenanceRecords),
-    [maintenanceRecords, vehicles],
+    () =>
+      getFleetAlertSummary(
+        vehicles,
+        maintenanceRecords,
+        new Date(),
+        reminderWindowDays,
+        preferences.distanceUnit,
+      ),
+    [maintenanceRecords, preferences.distanceUnit, reminderWindowDays, vehicles],
   )
   const fuelSummary = useMemo(
     () => getFleetFuelSummary(vehicles, fuelRecords),
@@ -118,8 +144,14 @@ function App() {
     [expenses, vehicles],
   )
   const documentSummary = useMemo(
-    () => getFleetDocumentSummary(vehicles, documents),
-    [documents, vehicles],
+    () =>
+      getFleetDocumentSummary(
+        vehicles,
+        documents,
+        new Date(),
+        reminderWindowDays,
+      ),
+    [documents, reminderWindowDays, vehicles],
   )
   const reportData = useMemo(
     () =>
@@ -428,6 +460,7 @@ function App() {
         </div>
         <Navigation
           activePage={activeNavigationPage}
+          appVersion={APP_VERSION}
           onNavigate={handleNavigate}
           vehicleCount={vehicles.length}
         />
@@ -436,6 +469,7 @@ function App() {
       <main className="main-content">
         {page === PAGES.dashboard ? (
           <Dashboard
+            preferences={preferences}
             latestExpense={expenseSummary.latestExpense}
             latestExpenseVehicle={expenseSummary.latestExpenseVehicle}
             expiringDocumentCount={documentSummary.expiringDocumentCount}
@@ -464,23 +498,27 @@ function App() {
           />
         ) : null}
 
-        {page === PAGES.reports ? <ReportsPage reports={reportData} /> : null}
+        {page === PAGES.reports ? <ReportsPage preferences={preferences} reports={reportData} /> : null}
 
         {page === PAGES.settings ? (
           <SettingsPage
             backupExportedAt={backupExportedAt}
             backupImportedAt={backupImportedAt}
             clearDataConfirmation={clearDataConfirmation}
+            appVersion={APP_VERSION}
+            preferences={preferences}
             onClearAllData={handleClearAllData}
             onImportBackup={handleImportAllData}
             onMarkClearConfirmation={setClearDataConfirmation}
             onRequestExport={handleExportAllData}
+            onUpdatePreferences={setPreferences}
           />
         ) : null}
 
         {page === PAGES.vehicles ? (
           <VehiclesPage
             editingVehicle={editingVehicle}
+            preferences={preferences}
             onCancelEdit={() => setEditingVehicleId(null)}
             onDeleteVehicle={handleDeleteVehicle}
             onEditVehicle={handleEditVehicle}
@@ -492,8 +530,9 @@ function App() {
 
         {page === PAGES.vehicleDetail ? (
           selectedVehicle ? (
-          <VehicleDetailPage
+            <VehicleDetailPage
               key={selectedVehicle.id}
+              preferences={preferences}
               expenses={expenses}
               onDeleteExpense={handleDeleteExpense}
               documents={documents}

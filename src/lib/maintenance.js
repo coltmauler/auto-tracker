@@ -1,3 +1,9 @@
+import {
+  formatDateValue,
+  formatDistanceValue,
+  formatMoneyValue,
+} from './preferences.js'
+
 const STORAGE_KEY = 'auto-tracker.v0.0.2.maintenance'
 
 const DEFAULT_MAINTENANCE = {
@@ -64,50 +70,34 @@ export function validateMaintenance(record) {
   const costValue = record.cost.trim()
 
   if (!record.serviceDate.trim()) {
-    errors.serviceDate = 'Service date is required.'
+    errors.serviceDate = 'Choose the service date.'
   }
 
   if (!record.serviceType.trim()) {
-    errors.serviceType = 'Service type is required.'
+    errors.serviceType = 'Enter a service type.'
   }
 
   if (!mileageValue) {
-    errors.mileage = 'Mileage is required.'
+    errors.mileage = 'Enter the mileage at service.'
   } else if (!/^\d+$/.test(mileageValue)) {
-    errors.mileage = 'Mileage must be a non-negative whole number.'
+    errors.mileage = 'Mileage must be a whole number of miles.'
   }
 
   if (!costValue) {
-    errors.cost = 'Cost is required.'
+    errors.cost = 'Enter the service cost.'
   } else if (Number.isNaN(Number(costValue)) || Number(costValue) < 0) {
-    errors.cost = 'Cost must be a non-negative number.'
+    errors.cost = 'Cost must be zero or a positive number.'
   }
 
   return errors
 }
 
-export function formatMoney(value) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(Number(value) || 0)
+export function formatMoney(value, currencySymbol = '$') {
+  return formatMoneyValue(value, currencySymbol)
 }
 
-export function formatServiceDate(value) {
-  if (!value) {
-    return 'Not set'
-  }
-
-  const parsedDate = new Date(`${value}T00:00:00`)
-  if (Number.isNaN(parsedDate.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(parsedDate)
+export function formatServiceDate(value, dateFormat = 'mdy') {
+  return formatDateValue(value, dateFormat)
 }
 
 export function getLatestMaintenanceRecord(records) {
@@ -127,14 +117,21 @@ export function getLatestMaintenanceRecord(records) {
   })[0]
 }
 
-export function getMaintenanceStats(records, vehicleMileage) {
+export function getMaintenanceStats(records, vehicleMileage, preferences = null) {
   const totalCost = records.reduce((sum, record) => sum + (Number(record.cost) || 0), 0)
   const latestRecord = getLatestMaintenanceRecord(records)
+  const distanceUnit = preferences?.distanceUnit ?? 'miles'
+  const dateFormat = preferences?.dateFormat ?? 'mdy'
 
   return {
-    currentMileage: vehicleMileage || 'Not set',
+    currentMileage:
+      vehicleMileage != null && vehicleMileage !== ''
+        ? formatDistanceValue(vehicleMileage, distanceUnit)
+        : 'Not set',
     maintenanceCount: records.length,
     totalCost,
-    lastServiceDate: latestRecord ? formatServiceDate(latestRecord.serviceDate) : 'No records yet',
+    lastServiceDate: latestRecord
+      ? formatServiceDate(latestRecord.serviceDate, dateFormat)
+      : 'No records yet',
   }
 }

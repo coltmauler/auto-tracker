@@ -1,10 +1,20 @@
-function VehicleList({ vehicles, onDeleteVehicle, onEditVehicle, onViewVehicle }) {
+import { formatDistanceValue } from '../lib/preferences.js'
+
+function VehicleList({
+  preferences,
+  vehicles,
+  onDeleteVehicle,
+  onEditVehicle,
+  onViewVehicle,
+}) {
+  const distanceUnit = preferences?.distanceUnit ?? 'miles'
+
   if (vehicles.length === 0) {
     return (
       <section className="page-panel">
         <div className="empty-state">
           <h3>No vehicles yet</h3>
-          <p>Add your first vehicle using the form above.</p>
+          <p>Add your first vehicle to start tracking service, fuel, expenses, and documents.</p>
         </div>
       </section>
     )
@@ -69,7 +79,7 @@ function VehicleList({ vehicles, onDeleteVehicle, onEditVehicle, onViewVehicle }
             <dl className="vehicle-details">
               <div>
                 <dt>Mileage</dt>
-                <dd>{vehicle.mileage || 'Not set'} miles</dd>
+                <dd>{formatDistanceValue(vehicle.mileage, distanceUnit)}</dd>
               </div>
               <div>
                 <dt>VIN</dt>

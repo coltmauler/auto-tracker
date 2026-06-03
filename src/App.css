@@ -49,6 +49,34 @@
   flex-wrap: wrap;
 }
 
+.navigation-shell {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+}
+
+.nav-version {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.05);
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.nav-version strong {
+  color: var(--text-h);
+}
+
+.nav-version-label {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 .nav-button,
 .primary-button,
 .secondary-button,
@@ -422,6 +450,16 @@
   gap: 16px;
 }
 
+.settings-form-grid {
+  margin-top: 8px;
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
 .settings-actions {
   display: flex;
   gap: 12px;
@@ -620,11 +658,20 @@
   text-align: center;
 }
 
+.empty-report-note {
+  margin: 0;
+  padding: 4px 0 2px;
+}
+
 @media (max-width: 860px) {
   .topbar,
   .page-header {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .navigation-shell {
+    justify-items: stretch;
   }
 
   .dashboard-grid,
@@ -666,6 +713,10 @@
   .settings-meta-grid {
     grid-template-columns: 1fr;
   }
+
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -678,5 +729,61 @@
   .page-panel {
     padding: 18px;
     border-radius: 20px;
+  }
+
+  .navigation,
+  .settings-actions,
+  .form-actions,
+  .vehicle-actions {
+    width: 100%;
+  }
+
+  .nav-button,
+  .primary-button,
+  .secondary-button,
+  .danger-button,
+  .settings-file-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav-button {
+    justify-content: space-between;
+  }
+
+  .navigation {
+    flex-direction: column;
+  }
+
+  .nav-count {
+    margin-left: auto;
+  }
+
+  .nav-version {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .form-grid,
+  .settings-meta-grid,
+  .about-grid,
+  .dashboard-grid,
+  .dashboard-grid-three,
+  .dashboard-grid-two,
+  .report-grid {
+    gap: 12px;
+  }
+
+  .detail-stat {
+    padding: 12px;
+  }
+
+  .report-table th,
+  .report-table td {
+    padding: 10px 8px;
+  }
+
+  .empty-state {
+    padding: 12px;
   }
 }
