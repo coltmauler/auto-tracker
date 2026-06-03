@@ -16,6 +16,14 @@ import {
   getStoredMaintenance,
   saveMaintenance,
 } from './lib/maintenance.js'
+import {
+  createEmptyFuelRecord,
+  createFuelRecordId,
+  getFleetFuelSummary,
+  getStoredFuelRecords,
+  saveFuelRecords,
+} from './lib/fuel.js'
+import { getFleetAlertSummary } from './lib/serviceSchedules.js'
 import './App.css'
 
 const PAGES = {
@@ -28,6 +36,7 @@ function App() {
   const [page, setPage] = useState(PAGES.dashboard)
   const [vehicles, setVehicles] = useState(getStoredVehicles)
   const [maintenanceRecords, setMaintenanceRecords] = useState(getStoredMaintenance)
+  const [fuelRecords, setFuelRecords] = useState(getStoredFuelRecords)
   const [editingVehicleId, setEditingVehicleId] = useState(null)
   const [selectedVehicleId, setSelectedVehicleId] = useState(null)
 
@@ -38,6 +47,10 @@ function App() {
   useEffect(() => {
     saveMaintenance(maintenanceRecords)
   }, [maintenanceRecords])
+
+  useEffect(() => {
+    saveFuelRecords(fuelRecords)
+  }, [fuelRecords])
 
   const selectedVehicle = useMemo(
     () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
@@ -54,6 +67,14 @@ function App() {
   const latestMaintenanceVehicle =
     latestMaintenanceRecord &&
     vehicles.find((vehicle) => vehicle.id === latestMaintenanceRecord.vehicleId)
+  const alertSummary = useMemo(
+    () => getFleetAlertSummary(vehicles, maintenanceRecords),
+    [maintenanceRecords, vehicles],
+  )
+  const fuelSummary = useMemo(
+    () => getFleetFuelSummary(vehicles, fuelRecords),
+    [fuelRecords, vehicles],
+  )
 
   const totalMaintenanceCost = maintenanceRecords.reduce(
     (sum, record) => sum + (Number(record.cost) || 0),
@@ -104,6 +125,9 @@ function App() {
     setMaintenanceRecords((currentRecords) =>
       currentRecords.filter((record) => record.vehicleId !== vehicleId),
     )
+    setFuelRecords((currentRecords) =>
+      currentRecords.filter((record) => record.vehicleId !== vehicleId),
+    )
 
     if (wasEditing) {
       setEditingVehicleId(null)
@@ -152,6 +176,32 @@ function App() {
     )
   }
 
+  function handleSaveFuel(vehicleId, fuelData, editingId) {
+    setFuelRecords((currentRecords) => {
+      if (editingId) {
+        return currentRecords.map((record) =>
+          record.id === editingId ? { ...record, ...fuelData } : record,
+        )
+      }
+
+      return [
+        {
+          id: createFuelRecordId(),
+          vehicleId,
+          ...createEmptyFuelRecord(),
+          ...fuelData,
+        },
+        ...currentRecords,
+      ]
+    })
+  }
+
+  function handleDeleteFuel(recordId) {
+    setFuelRecords((currentRecords) =>
+      currentRecords.filter((record) => record.id !== recordId),
+    )
+  }
+
   const activeNavigationPage =
     page === PAGES.vehicleDetail ? PAGES.vehicles : page
 
@@ -174,7 +224,17 @@ function App() {
           <Dashboard
             latestMaintenanceRecord={latestMaintenanceRecord}
             latestMaintenanceVehicle={latestMaintenanceVehicle}
+            latestFuelRecord={fuelSummary.latestFuelRecord}
+            latestFuelVehicle={fuelSummary.latestFuelVehicle}
             maintenanceRecordCount={maintenanceRecords.length}
+            nextAlert={alertSummary.nextAlert}
+            overdueAlertCount={alertSummary.overdueAlerts.length}
+            fuelAverageMpg={fuelSummary.averageMpg}
+            fuelCostPerMile={fuelSummary.costPerMile}
+            fuelLifetimeSpend={fuelSummary.lifetimeFuelSpend}
+            fuelMonthlySpend={fuelSummary.monthlyFuelSpend}
+            fuelRecordCount={fuelSummary.totalFuelRecordCount}
+            upcomingAlertCount={alertSummary.upcomingAlerts.length}
             totalMaintenanceCost={totalMaintenanceCost}
             vehicleCount={vehicles.length}
           />
@@ -194,11 +254,14 @@ function App() {
 
         {page === PAGES.vehicleDetail ? (
           selectedVehicle ? (
-            <VehicleDetailPage
+          <VehicleDetailPage
               key={selectedVehicle.id}
+              fuelRecords={fuelRecords}
               maintenanceRecords={maintenanceRecords}
               onBack={handleBackFromDetail}
+              onDeleteFuel={handleDeleteFuel}
               onDeleteMaintenance={handleDeleteMaintenance}
+              onSaveFuel={handleSaveFuel}
               onSaveMaintenance={handleSaveMaintenance}
               selectedVehicle={selectedVehicle}
             />

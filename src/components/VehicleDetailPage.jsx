@@ -1,9 +1,16 @@
 import { useState } from 'react'
+import FuelForm from './FuelForm.jsx'
+import FuelList from './FuelList.jsx'
 import MaintenanceForm from './MaintenanceForm.jsx'
 import MaintenanceList from './MaintenanceList.jsx'
-import { formatMoney, getMaintenanceStats } from '../lib/maintenance.js'
+import { formatMoney, formatServiceDate, getMaintenanceStats } from '../lib/maintenance.js'
+import { getVehicleFuelStats } from '../lib/fuel.js'
+import { getVehicleServiceAlerts, getVehicleServiceSchedules } from '../lib/serviceSchedules.js'
 
 function VehicleDetailPage({
+  fuelRecords,
+  onDeleteFuel,
+  onSaveFuel,
   maintenanceRecords,
   onBack,
   onDeleteMaintenance,
@@ -13,7 +20,11 @@ function VehicleDetailPage({
   const vehicleMaintenanceRecords = maintenanceRecords.filter(
     (record) => record.vehicleId === selectedVehicle.id,
   )
+  const vehicleFuelRecords = fuelRecords.filter((record) => record.vehicleId === selectedVehicle.id)
   const stats = getMaintenanceStats(vehicleMaintenanceRecords, selectedVehicle.mileage)
+  const fuelStats = getVehicleFuelStats(selectedVehicle, fuelRecords)
+  const schedules = getVehicleServiceSchedules(selectedVehicle)
+  const alerts = getVehicleServiceAlerts(selectedVehicle, maintenanceRecords)
 
   return (
     <div className="page-stack">
@@ -92,12 +103,104 @@ function VehicleDetailPage({
             </div>
           </article>
         </div>
+
+        <div className="detail-secondary-grid">
+          <article className="info-card">
+            <h3>Service schedule</h3>
+            {schedules.length > 0 ? (
+              <div className="schedule-summary-list">
+                {schedules.map((schedule) => (
+                  <div key={schedule.key} className="schedule-summary-item">
+                    <strong>{schedule.label}</strong>
+                    <p className="muted">
+                      {schedule.miles ? `${schedule.miles.toLocaleString()} miles` : 'No miles'}
+                      {schedule.miles && schedule.months ? ' or ' : ''}
+                      {schedule.months ? `${schedule.months} months` : ''}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="muted">No service schedule configured for this vehicle.</p>
+            )}
+          </article>
+
+          <article className="info-card">
+            <h3>Maintenance alerts</h3>
+            {alerts.length > 0 ? (
+              <div className="alert-list">
+                {alerts.map((alert) => (
+                  <div
+                    key={alert.id}
+                    className={
+                      alert.status === 'overdue'
+                        ? 'alert-card alert-overdue'
+                        : 'alert-card alert-upcoming'
+                    }
+                  >
+                    <div className="alert-card-header">
+                      <strong>{alert.serviceLabel}</strong>
+                      <span className="alert-badge">{alert.status}</span>
+                    </div>
+                    <p>{alert.message}</p>
+                    <p className="muted">
+                      Last service: {formatServiceDate(alert.lastServiceRecord.serviceDate)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="muted">No upcoming or overdue alerts for this vehicle.</p>
+            )}
+          </article>
+
+          <article className="info-card">
+            <h3>Fuel statistics</h3>
+            <div className="detail-stat-grid">
+              <div className="detail-stat">
+                <span>Fuel records</span>
+                <strong>{fuelStats.fuelRecordCount}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Lifetime fuel spend</span>
+                <strong>{formatMoney(fuelStats.lifetimeFuelSpend)}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Monthly fuel spend</span>
+                <strong>{formatMoney(fuelStats.monthlyFuelSpend)}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Average MPG</span>
+                <strong>{fuelStats.averageMpg ? fuelStats.averageMpg.toFixed(1) : 'N/A'}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Cost per mile</span>
+                <strong>{fuelStats.costPerMile ? formatMoney(fuelStats.costPerMile) : 'N/A'}</strong>
+              </div>
+              <div className="detail-stat">
+                <span>Last fuel date</span>
+                <strong>
+                  {fuelStats.latestFuelRecord
+                    ? formatServiceDate(fuelStats.latestFuelRecord.fillDate)
+                    : 'No records yet'}
+                </strong>
+              </div>
+            </div>
+          </article>
+        </div>
       </section>
 
       <VehicleMaintenanceSection
         maintenanceRecords={vehicleMaintenanceRecords}
         onDeleteMaintenance={onDeleteMaintenance}
         onSaveMaintenance={onSaveMaintenance}
+        selectedVehicleId={selectedVehicle.id}
+      />
+
+      <VehicleFuelSection
+        fuelRecords={vehicleFuelRecords}
+        onDeleteFuel={onDeleteFuel}
+        onSaveFuel={onSaveFuel}
         selectedVehicleId={selectedVehicle.id}
       />
     </div>
@@ -131,6 +234,32 @@ function VehicleMaintenanceSection({
         records={maintenanceRecords}
         onDeleteRecord={onDeleteMaintenance}
         onEditRecord={(record) => setEditingMaintenanceId(record.id)}
+      />
+    </>
+  )
+}
+
+function VehicleFuelSection({ fuelRecords, onDeleteFuel, onSaveFuel, selectedVehicleId }) {
+  const [editingFuelId, setEditingFuelId] = useState(null)
+  const editingRecord = fuelRecords.find((record) => record.id === editingFuelId) ?? null
+
+  function handleSaveRecord(recordData, editingId) {
+    onSaveFuel(selectedVehicleId, recordData, editingId)
+    setEditingFuelId(null)
+  }
+
+  return (
+    <>
+      <FuelForm
+        key={editingRecord?.id ?? `fuel-new-${selectedVehicleId}`}
+        editingRecord={editingRecord}
+        onCancelEdit={() => setEditingFuelId(null)}
+        onSaveRecord={handleSaveRecord}
+      />
+      <FuelList
+        records={fuelRecords}
+        onDeleteRecord={onDeleteFuel}
+        onEditRecord={(record) => setEditingFuelId(record.id)}
       />
     </>
   )

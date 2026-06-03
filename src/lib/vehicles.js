@@ -9,6 +9,10 @@ const DEFAULT_VEHICLE = {
   vin: '',
   licensePlate: '',
   notes: '',
+  oilChangeMiles: '',
+  oilChangeMonths: '',
+  tireRotationMiles: '',
+  tireRotationMonths: '',
 }
 
 export function createEmptyVehicle() {
@@ -90,5 +94,37 @@ export function validateVehicle(vehicle) {
     errors.mileage = 'Mileage must be a non-negative whole number.'
   }
 
+  validateOptionalInterval(vehicle.oilChangeMiles, 'oilChangeMiles', errors, 'Oil change miles')
+  validateOptionalInterval(
+    vehicle.oilChangeMonths,
+    'oilChangeMonths',
+    errors,
+    'Oil change months',
+  )
+  validateOptionalInterval(
+    vehicle.tireRotationMiles,
+    'tireRotationMiles',
+    errors,
+    'Tire rotation miles',
+  )
+  validateOptionalInterval(
+    vehicle.tireRotationMonths,
+    'tireRotationMonths',
+    errors,
+    'Tire rotation months',
+  )
+
   return errors
+}
+
+function validateOptionalInterval(value, fieldName, errors, label) {
+  const trimmedValue = value.trim()
+
+  if (!trimmedValue) {
+    return
+  }
+
+  if (!/^\d+$/.test(trimmedValue) || Number(trimmedValue) <= 0) {
+    errors[fieldName] = `${label} must be a positive whole number.`
+  }
 }

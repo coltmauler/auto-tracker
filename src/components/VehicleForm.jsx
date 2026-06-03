@@ -34,6 +34,10 @@ function VehicleForm({ editingVehicle, onCancelEdit, onSaveVehicle }) {
       vin: form.vin.trim(),
       licensePlate: form.licensePlate.trim(),
       notes: form.notes.trim(),
+      oilChangeMiles: form.oilChangeMiles.trim(),
+      oilChangeMonths: form.oilChangeMonths.trim(),
+      tireRotationMiles: form.tireRotationMiles.trim(),
+      tireRotationMonths: form.tireRotationMonths.trim(),
     }
 
     onSaveVehicle(cleanedVehicle, editingVehicle?.id ?? null)
@@ -135,6 +139,73 @@ function VehicleForm({ editingVehicle, onCancelEdit, onSaveVehicle }) {
               placeholder="Anything useful to remember"
             />
           </label>
+
+          <div className="schedule-block field-wide">
+            <div className="schedule-heading">
+              <p className="section-label">Service schedule</p>
+              <p className="muted">
+                Optional reminders for oil changes and tire rotations.
+              </p>
+            </div>
+
+            <div className="schedule-grid">
+              <label className="field">
+                <span>Oil change miles</span>
+                <input
+                  name="oilChangeMiles"
+                  value={form.oilChangeMiles}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  placeholder="5000"
+                />
+                {errors.oilChangeMiles ? (
+                  <small className="error">{errors.oilChangeMiles}</small>
+                ) : null}
+              </label>
+
+              <label className="field">
+                <span>Oil change months</span>
+                <input
+                  name="oilChangeMonths"
+                  value={form.oilChangeMonths}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  placeholder="6"
+                />
+                {errors.oilChangeMonths ? (
+                  <small className="error">{errors.oilChangeMonths}</small>
+                ) : null}
+              </label>
+
+              <label className="field">
+                <span>Tire rotation miles</span>
+                <input
+                  name="tireRotationMiles"
+                  value={form.tireRotationMiles}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  placeholder="7500"
+                />
+                {errors.tireRotationMiles ? (
+                  <small className="error">{errors.tireRotationMiles}</small>
+                ) : null}
+              </label>
+
+              <label className="field">
+                <span>Tire rotation months</span>
+                <input
+                  name="tireRotationMonths"
+                  value={form.tireRotationMonths}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  placeholder="12"
+                />
+                {errors.tireRotationMonths ? (
+                  <small className="error">{errors.tireRotationMonths}</small>
+                ) : null}
+              </label>
+            </div>
+          </div>
         </div>
 
         <div className="form-actions">

@@ -1,12 +1,15 @@
-import { formatMoney, formatServiceDate } from '../lib/maintenance.js'
+import { formatFuelMileage, formatMoney, sortFuelRecordsDescending } from '../lib/fuel.js'
+import { formatServiceDate } from '../lib/maintenance.js'
 
-function MaintenanceList({ records, onDeleteRecord, onEditRecord }) {
-  if (records.length === 0) {
+function FuelList({ records, onDeleteRecord, onEditRecord }) {
+  const sortedRecords = sortFuelRecordsDescending(records)
+
+  if (sortedRecords.length === 0) {
     return (
       <section className="page-panel">
         <div className="empty-state">
-          <h3>No maintenance records yet</h3>
-          <p>Add the first service entry above.</p>
+          <h3>No fuel records yet</h3>
+          <p>Add the first fill-up above.</p>
         </div>
       </section>
     )
@@ -16,19 +19,20 @@ function MaintenanceList({ records, onDeleteRecord, onEditRecord }) {
     <section className="page-panel">
       <div className="page-header compact">
         <div>
-          <p className="section-label">Maintenance history</p>
-          <h2>Service records</h2>
+          <p className="section-label">Fuel history</p>
+          <h2>Fuel records</h2>
         </div>
       </div>
 
       <div className="maintenance-list">
-        {records.map((record) => (
-          <article key={record.id} className="maintenance-card">
+        {sortedRecords.map((record) => (
+          <article key={record.id} className="maintenance-card fuel-card">
             <div className="vehicle-card-header">
               <div>
-                <p className="vehicle-title">{record.serviceType}</p>
+                <p className="vehicle-title">{formatServiceDate(record.fillDate)}</p>
                 <p className="vehicle-subtitle">
-                  {formatServiceDate(record.serviceDate)} - {record.mileage} miles -{' '}
+                  {formatFuelMileage(Number(record.mileage) || null)} miles -{' '}
+                  {formatFuelMileage(Number(record.gallons) || null)} gallons -{' '}
                   {formatMoney(record.cost)}
                 </p>
               </div>
@@ -50,10 +54,10 @@ function MaintenanceList({ records, onDeleteRecord, onEditRecord }) {
               </div>
             </div>
 
-            <dl className="vehicle-details maintenance-details">
+            <dl className="vehicle-details maintenance-details fuel-details">
               <div>
-                <dt>Shop</dt>
-                <dd>{record.shop || 'Not set'}</dd>
+                <dt>Station</dt>
+                <dd>{record.station || 'Not set'}</dd>
               </div>
               <div className="vehicle-notes">
                 <dt>Notes</dt>
@@ -67,4 +71,4 @@ function MaintenanceList({ records, onDeleteRecord, onEditRecord }) {
   )
 }
 
-export default MaintenanceList
+export default FuelList

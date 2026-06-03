@@ -8,14 +8,21 @@
 - localStorage
 
 ## Current Version
-v0.0.2
+v0.0.4
 
 ## Current Features
 - Vehicle management
 - Vehicle detail view
 - Maintenance records
 - Maintenance cost tracking
+- Service schedules per vehicle
+- Upcoming maintenance alerts
+- Overdue maintenance alerts
+- Dashboard alert widgets
+- Vehicle detail alert view
 - Dashboard widgets
+- Fuel records per vehicle
+- Fuel analytics and spend tracking
 
 ## Project Rules
 - Keep code simple and modular
@@ -25,7 +32,6 @@ v0.0.2
 - Do not add routing libraries yet
 - Do not add authentication yet
 - Do not add Supabase yet
-- Do not add fuel logs yet
 - Do not add documents yet
 
 ## Required After Each Change
@@ -45,6 +51,14 @@ v0.0.2
 - Service schedules
 - Upcoming maintenance alerts
 - Overdue maintenance alerts
+
+### v0.0.4
+- Fuel records per vehicle
+- Add/edit/delete fuel records
+- Average MPG calculations
+- Lifetime fuel spend
+- Monthly fuel spend
+- Cost per mile
 
 ## Development Workflow
 

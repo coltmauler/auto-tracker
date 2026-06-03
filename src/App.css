@@ -161,8 +161,39 @@
   gap: 16px;
 }
 
-.dashboard-grid-four {
+.dashboard-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-grid-two {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-stack {
+  display: grid;
+  gap: 20px;
+}
+
+.dashboard-section {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dashboard-section-heading h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-h);
+}
+
+.dashboard-section-heading p {
+  margin: 0;
 }
 
 .info-card,
@@ -340,6 +371,13 @@
   gap: 16px;
 }
 
+.detail-secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
 .detail-stat-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -370,8 +408,76 @@
   gap: 14px;
 }
 
+.schedule-block {
+  padding: 18px;
+  border: 1px dashed rgba(79, 70, 229, 0.24);
+  border-radius: 20px;
+  background: rgba(79, 70, 229, 0.04);
+}
+
+.schedule-heading {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.schedule-summary-list,
+.alert-list {
+  display: grid;
+  gap: 12px;
+}
+
+.schedule-summary-item,
+.alert-card {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(208, 213, 221, 0.8);
+}
+
+.alert-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.alert-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.alert-upcoming .alert-badge {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+.alert-overdue .alert-badge {
+  background: rgba(220, 38, 38, 0.12);
+  color: #b91c1c;
+}
+
+.alert-card p {
+  margin: 10px 0 0;
+}
+
 .maintenance-card {
   box-shadow: none;
+}
+
+.fuel-card {
+  background: rgba(239, 246, 255, 0.72);
 }
 
 .maintenance-details {
@@ -390,10 +496,13 @@
   }
 
   .dashboard-grid,
-  .dashboard-grid-four,
+  .dashboard-grid-three,
+  .dashboard-grid-two,
   .form-grid,
+  .schedule-grid,
   .vehicle-details,
   .vehicle-detail-grid,
+  .detail-secondary-grid,
   .detail-stat-grid {
     grid-template-columns: 1fr;
   }
@@ -405,6 +514,11 @@
   }
 
   .vehicle-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-section-heading {
     flex-direction: column;
     align-items: stretch;
   }
